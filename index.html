@@ -17,6 +17,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="tz-lookup.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
         body {
@@ -505,6 +506,60 @@
 
         const airportDbReady = loadAirports();
 
+        function getTimeZoneOffsetMs(date, timeZone) {
+            const parts = new Intl.DateTimeFormat('en-US', {
+                timeZone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hourCycle: 'h23'
+            }).formatToParts(date);
+            const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+            return Date.UTC(
+                Number(values.year),
+                Number(values.month) - 1,
+                Number(values.day),
+                Number(values.hour),
+                Number(values.minute),
+                Number(values.second)
+            ) - date.getTime();
+        }
+
+        function localAirportTimeToUtc(value, airport) {
+            if (!value || value === 'N/A') return null;
+
+            // Respect timestamps that already include a UTC marker or numeric offset.
+            if (/(?:Z|[+-]\d{2}:?\d{2})$/i.test(value)) {
+                const instant = new Date(value);
+                return isNaN(instant) ? null : instant;
+            }
+
+            const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/);
+            if (!match || !airport?.lat || !airport?.lng || typeof tzlookup !== 'function') return null;
+
+            const [, year, month, day, hour, minute, second = '0'] = match;
+            const localAsUtc = Date.UTC(
+                Number(year),
+                Number(month) - 1,
+                Number(day),
+                Number(hour),
+                Number(minute),
+                Number(second)
+            );
+            const timeZone = tzlookup(airport.lat, airport.lng);
+            let candidate = new Date(localAsUtc);
+            let offset = getTimeZoneOffsetMs(candidate, timeZone);
+            candidate = new Date(localAsUtc - offset);
+
+            // Recheck at the resolved instant to handle daylight-saving transitions.
+            const resolvedOffset = getTimeZoneOffsetMs(candidate, timeZone);
+            if (resolvedOffset !== offset) candidate = new Date(localAsUtc - resolvedOffset);
+            return candidate;
+        }
+
         function getRecentSearches() {
             try {
                 const value = JSON.parse(localStorage.getItem('flightCardRecents') || '[]');
@@ -680,10 +735,10 @@
             let hasValidTimeline = false;
 
             if (f.departure_time && f.arrival_time && f.departure_time !== "N/A" && f.arrival_time !== "N/A") {
-                const depDate = new Date(f.departure_time);
-                const arrDate = new Date(f.arrival_time);
+                const depDate = localAirportTimeToUtc(f.departure_time, depData);
+                const arrDate = localAirportTimeToUtc(f.arrival_time, arrData);
 
-                if (!isNaN(depDate) && !isNaN(arrDate)) {
+                if (depDate && arrDate && !isNaN(depDate) && !isNaN(arrDate)) {
                     const diffMs = arrDate - depDate;
                     if (diffMs > 0) {
                         hasValidTimeline = true;
@@ -711,7 +766,7 @@
             }
 
             if (!hasValidTimeline && durationLabel) {
-                durationLabel.textContent = "Direct";
+                durationLabel.textContent = "Time unavailable";
                 progressBar.style.width = "0%";
                 planeIcon.style.left = "50%";
                 routeStatusLabel.textContent = "Live Status";
