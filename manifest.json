@@ -1,0 +1,25 @@
+{
+  "name": "Airport Guide Live",
+  "short_name": "Airport Guide",
+  "description": "Live Flight Status & Tracker. Check Gates, Terminals, and Delays.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#0d111c",
+  "theme_color": "#0d111c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "images/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "images/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
