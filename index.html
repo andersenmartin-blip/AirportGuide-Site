@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <title>Live Flight Status &amp; Tracker | Check Gates &amp; Delays</title>
+    <meta name="description" content="Track real-time flight status, gate changes, and delays. Check your flight number instantly and see if you qualify for €600 in flight compensation.">
+    <meta name="keywords" content="flight status, live flight tracker, check flight delay, gate number, airport departures">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Airport Guide">
+    <link rel="apple-touch-icon" href="images/icon-192.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0d111c;
+            color: #f8fafc;
+            background-image: radial-gradient(circle at 50% 0%, #1e2640 0%, #0d111c 100%);
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image: linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+            background-size: 44px 44px;
+            mask-image: linear-gradient(to bottom, black, transparent 72%);
+        }
+        .search-glass {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+        }
+        .boarding-pass {
+            background: #ffffff;
+            color: #0f172a;
+            border-radius: 28px;
+            position: relative;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .pass-divider {
+            border-top: 2px dashed #e2e8f0;
+            position: relative;
+            margin: 0;
+        }
+        .pass-divider::before, .pass-divider::after {
+            content: '';
+            position: absolute;
+            top: -12px;
+            width: 24px;
+            height: 24px;
+            background-color: #0d111c;
+            border-radius: 50%;
+        }
+        .pass-divider::before { left: -12px; }
+        .pass-divider::after { right: -12px; }
+        .loader {
+            border-top-color: #6366f1;
+            animation: spinner 1s linear infinite;
+        }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        input:focus { outline: none; }
+        :focus-visible {
+            outline: 3px solid rgba(129, 140, 248, .9);
+            outline-offset: 3px;
+        }
+        .safe-bottom { padding-bottom: max(2rem, env(safe-area-inset-bottom)); }
+        .toast-visible { opacity: 1 !important; transform: translate(-50%, 0) !important; }
+        #routeProgressBar { width: 0; }
+        #routePlaneIcon { left: 0; }
+
+        .pulse-live-dot {
+            width: 8px;
+            height: 8px;
+            background-color: currentColor;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse-dot-anim 1.5s infinite;
+        }
+        @keyframes pulse-dot-anim {
+            0% { transform: scale(0.9); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.4; }
+            100% { transform: scale(0.9); opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                scroll-behavior: auto !important;
+                transition-duration: .01ms !important;
+            }
+        }
+    </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YYW1KW4CGN"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-YYW1KW4CGN');
+</script>
+<script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1">
+  (function () {
+      var script = document.createElement("script");
+      script.async = 1;
+      script.src = 'https://tp-em.com/NTE3ODI2.js?t=517826';
+      document.head.appendChild(script);
+  })();
+</script>
+</head>
+<body class="flex flex-col items-center px-4 overflow-x-hidden min-h-[100svh] safe-bottom selection:bg-indigo-500/30">
+
+    <main class="w-full flex flex-col items-center">
+
+    <div id="searchView" class="w-full max-w-md flex flex-col items-center fade-in mt-8 sm:mt-20">
+        <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-300 mb-8">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,.8)]"></span>
+            Airport Guide · Live data
+        </div>
+        <div class="w-20 h-20 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-3xl flex items-center justify-center text-white text-4xl mb-8 shadow-lg shadow-indigo-500/40 transform -rotate-6">
+            <i class="fas fa-plane"></i>
+        </div>
+
+        <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-3 text-center">Find your flight</h1>
+        <p class="text-slate-400 text-center mb-9 max-w-sm">Live gate, terminal, delay and arrival details — without creating an account.</p>
+
+        <form id="searchForm" class="w-full relative">
+            <label for="flightInput" class="sr-only">Flight number</label>
+            <div class="relative flex items-center">
+                <div class="absolute left-5 text-slate-400 text-xl"><i class="fas fa-search"></i></div>
+                <input
+                    type="text"
+                    id="flightInput"
+                    placeholder="E.g. AA733 or SK943"
+                    class="w-full bg-slate-800/50 border border-slate-700 text-white text-xl sm:text-2xl px-14 py-5 rounded-2xl focus:border-indigo-500 focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold uppercase placeholder:normal-case placeholder:font-normal placeholder:text-slate-500"
+                    autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text"
+                    aria-describedby="flightHint errorMsg" aria-invalid="false" required
+                >
+                <button type="submit" id="searchButton" aria-label="Find flight" class="absolute right-3 min-w-12 min-h-12 bg-indigo-600 hover:bg-indigo-500 text-white p-3 rounded-xl transition-colors shadow-md disabled:opacity-60 disabled:cursor-wait">
+                    <i class="fas fa-arrow-right text-xl"></i>
+                </button>
+            </div>
+            <div id="flightHint" class="flex items-center justify-center gap-4 mt-4 text-[11px] text-slate-500">
+                <span><i class="fas fa-bolt text-amber-400/80 mr-1"></i> Live status</span>
+                <span><i class="fas fa-lock text-emerald-400/80 mr-1"></i> No sign-up</span>
+            </div>
+            <div id="errorMsg" role="alert" aria-live="polite" class="text-red-300 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-center mt-4 hidden font-medium fade-in"></div>
+        </form>
+
+        <div id="recentSearches" class="w-full mt-6 flex flex-wrap justify-center gap-2 hidden fade-in"></div>
+
+        <div class="mt-16 max-w-sm mx-auto text-center px-4 pb-8">
+            <h2 class="text-slate-500 font-bold text-[10px] uppercase tracking-widest mb-3">One flight. The details that matter.</h2>
+            <p class="text-slate-500 text-xs leading-relaxed">
+                Search by flight number to see current departure and arrival times, terminals, gates, baggage belt and delay status in one clean flight card.
+            </p>
+        </div>
+
+    </div> <div id="loadingView" role="status" aria-live="polite" class="hidden flex-col items-center justify-center mt-20">
+        <div class="w-16 h-16 border-4 border-slate-700 border-t-indigo-500 rounded-full loader mb-6"></div>
+        <h2 class="text-xl font-semibold text-slate-300">Fetching Live Data...</h2>
+    </div>
+
+    <div id="resultView" class="hidden w-full max-w-md fade-in pb-12 relative" aria-live="polite">
+        <!-- 1. The Digital Boarding Pass Card (perfectly styled for download/sharing) -->
+        <div class="boarding-pass" id="boardingPassCard">
+            <!-- Card Header: Status-dependent gradient background -->
+            <div class="bg-slate-900 text-white p-6 pt-12 rounded-t-[28px] flex justify-between items-center relative overflow-hidden transition-colors duration-500 shadow-inner" id="cardHeader">
+                <!-- Navigation & Action Buttons (Hidden when downloading PNG) -->
+                <button type="button" onclick="resetSearch()" id="backBtnIcon" aria-label="Search for another flight" class="absolute top-4 left-4 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-200 backdrop-blur-sm z-20">
+                    <i class="fas fa-chevron-left text-sm"></i>
+                </button>
+                <button type="button" onclick="shareFlight()" id="shareBtnIcon" aria-label="Share flight status" class="absolute top-4 right-16 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-200 backdrop-blur-sm z-20">
+                    <i class="fas fa-share-nodes text-sm"></i>
+                </button>
+                <button type="button" onclick="downloadPass()" id="downloadBtnIcon" aria-label="Download flight card" class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-200 backdrop-blur-sm z-20">
+                    <i class="fas fa-download text-sm"></i>
+                </button>
+
+                <!-- Decorative background elements -->
+                <div class="absolute -right-6 -top-6 opacity-10 text-9xl transform rotate-12"><i class="fas fa-plane"></i></div>
+                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-white/5 rounded-full blur-xl pointer-events-none"></div>
+
+                <div class="relative z-10 flex flex-col">
+                    <span class="text-[10px] text-white/60 font-bold uppercase tracking-widest">Flight Status</span>
+                    <div class="text-3xl font-extrabold tracking-tight mt-0.5" id="cardFlightNumber">---</div>
+                </div>
+                <img id="cardAirlineLogo" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Airline logo" class="relative z-10 h-10 bg-white p-1.5 rounded-xl shadow-md object-contain border border-slate-100 max-w-[120px]" onerror="this.style.display='none'">
+            </div>
+
+            <!-- Route section (Departure & Arrival codes and progress bar) -->
+            <div class="p-6 pb-5 bg-white">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Departure</div>
+                    <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest text-right">Arrival</div>
+                </div>
+                <div class="flex justify-between items-center relative">
+                    <!-- Departure info -->
+                    <div class="w-5/12">
+                        <div class="text-5xl font-black text-slate-900 tracking-tighter" id="cardDepCode">---</div>
+                        <div class="text-xs text-slate-500 font-medium mt-0.5 truncate" id="cardDepCity">Departure</div>
+                    </div>
+
+                    <!-- Progress Timeline -->
+                    <div class="w-7/12 flex flex-col items-center justify-center px-3 relative">
+                        <span class="text-[9px] font-extrabold text-indigo-500 uppercase tracking-widest mb-1" id="flightDuration">Direct</span>
+                        <div class="w-full relative h-1.5 flex items-center">
+                            <!-- Background line -->
+                            <div class="absolute inset-x-0 bg-slate-100 rounded-full h-1"></div>
+                            <!-- Live Progress bar -->
+                            <div class="absolute left-0 top-0.5 bg-indigo-500 rounded-full h-1 transition-all duration-1000" id="routeProgressBar"></div>
+                            <!-- Plane Icon -->
+                            <div class="absolute text-indigo-500 transition-all duration-1000 transform -translate-y-[2px]" id="routePlaneIcon">
+                                <i class="fas fa-plane text-xs rotate-90 drop-shadow-md"></i>
+                            </div>
+                        </div>
+                        <span class="text-[8px] font-bold text-slate-400 mt-1 uppercase tracking-wider" id="routeStatusLabel">Checking Status</span>
+                    </div>
+
+                    <!-- Arrival info -->
+                    <div class="w-5/12 text-right">
+                        <div class="text-5xl font-black text-slate-900 tracking-tighter flex items-center justify-end gap-1">
+                            <span id="cardArrCode">---</span>
+                        </div>
+                        <div class="text-xs text-slate-500 font-medium mt-0.5 truncate" id="cardArrCity">Arrival</div>
+                        <!-- Weather Capsule Badge -->
+                        <div id="weatherContainer" class="inline-flex items-center gap-1.5 bg-sky-50 text-sky-600 border border-sky-100 rounded-full py-0.5 px-2 text-[10px] font-bold mt-1.5 hidden shadow-sm">
+                            <i id="weatherIcon" class="fas fa-sun"></i> <span id="weatherTemp">--°C</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Authentic Boarding Pass Divider -->
+            <div class="pass-divider"></div>
+
+            <!-- Timing and Gate Grid Details -->
+            <div class="p-6 bg-slate-50/70 border-b border-slate-100">
+                <!-- Status Badge -->
+                <div class="mb-6 flex justify-center">
+                    <div id="cardStatusBadge" class="px-5 py-2.5 rounded-full font-extrabold text-xs uppercase tracking-widest shadow-md flex items-center gap-2"></div>
+                </div>
+
+                <!-- Timing Details -->
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm">
+                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Departure Time</div>
+                        <div class="text-xl font-extrabold text-slate-800" id="cardDepTime">--:--</div>
+                        <div class="text-[10px] text-slate-500 font-medium mt-0.5" id="cardDepDate">Scheduled</div>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm text-right">
+                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Expected Arr.</div>
+                        <div class="text-xl font-extrabold text-slate-800" id="cardArrTime">--:--</div>
+                        <div class="text-[10px] text-slate-500 font-medium mt-0.5" id="cardArrDate">Local Time</div>
+                    </div>
+                </div>
+
+                <!-- Gate, Terminal and Baggage Details Card -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm" id="gateBox">
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Departure Info -->
+                        <div class="border-r border-slate-100 pr-2">
+                            <div class="text-[9px] text-indigo-500 font-extrabold uppercase tracking-widest mb-2 flex items-center gap-1">
+                                <i class="fas fa-plane-departure text-[10px]"></i> Departure
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <div class="text-[9px] text-slate-400 font-bold uppercase">Terminal</div>
+                                    <div class="text-lg font-extrabold text-slate-800" id="cardDepTerminal">-</div>
+                                </div>
+                                <div>
+                                    <div class="text-[9px] text-slate-400 font-bold uppercase">Gate</div>
+                                    <div class="text-lg font-extrabold text-slate-800" id="cardDepGate">TBA</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Arrival Info -->
+                        <div class="pl-2">
+                            <div class="text-[9px] text-emerald-500 font-extrabold uppercase tracking-widest mb-2 flex items-center gap-1">
+                                <i class="fas fa-plane-arrival text-[10px]"></i> Arrival
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <div class="text-[9px] text-slate-400 font-bold uppercase">Gate</div>
+                                    <div class="text-lg font-extrabold text-slate-800" id="cardArrGate">-</div>
+                                </div>
+                                <div>
+                                    <div class="text-[9px] text-slate-400 font-bold uppercase">Belt</div>
+                                    <div class="text-lg font-extrabold text-slate-800" id="cardBaggageBelt">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skeuomorphic Barcode for Authentic Look & Shareability -->
+                <div class="flex flex-col items-center justify-center mt-6 pt-5 border-t border-slate-200/60">
+                    <div class="h-10 w-60 bg-white flex items-center justify-between px-1 border border-slate-100/50 rounded shadow-sm opacity-90 overflow-hidden" id="barcodeContainer">
+                        <!-- Repeating custom vertical layout to resemble a real boarding pass barcode -->
+                        <div class="w-1.5 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-0.5 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-2.5 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-1.5 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-0.5 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-2 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-1 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-3 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-0.5 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-2 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-1.5 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-0.5 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-1 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-3 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-1 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-2.5 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-0.5 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-2 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-1.5 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-1 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-0.5 h-8 bg-slate-900 shrink-0"></div>
+                        <div class="w-3 h-8 bg-slate-900 shrink-0"></div>
+                    </div>
+                    <span class="text-[9px] font-mono tracking-[0.25em] text-slate-400 mt-1 uppercase" id="barcodeFlightNumber">GATES-LIVE</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Contextual travel offers -->
+        <div id="travelToolkit" class="mt-8 space-y-5">
+            <div class="flex items-center justify-center gap-2">
+                <div class="h-px bg-slate-800 flex-grow"></div>
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest text-center flex items-center gap-1.5">
+                    <i class="fas fa-sparkles text-indigo-400"></i> Helpful for this trip
+                </h3>
+                <div class="h-px bg-slate-800 flex-grow"></div>
+            </div>
+
+            <div class="flex flex-col gap-4" id="toolkitContainer">
+
+                <!-- AirHelp: Flight Delay Compensation Card -->
+                <div id="cardAirhelp" class="hidden bg-gradient-to-br from-rose-950/40 to-red-900/20 border border-red-500/30 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-red-500/50 hover:scale-[1.01]">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-red-600 text-white flex items-center justify-center text-xl shrink-0 shadow-lg shadow-red-600/20">
+                            <i class="fas fa-gavel"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <h4 class="text-sm font-bold text-red-200 uppercase tracking-wide">Flight Compensation</h4>
+                                <span class="bg-red-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Up to €600</span>
+                            </div>
+                            <p class="text-xs text-red-300/90 mt-2 leading-relaxed">
+                                Was your flight delayed over 3 hours or cancelled? Under EU passenger-rights rules, you may be eligible for up to <strong>€600</strong> in compensation.
+                            </p>
+                            <a href="https://www.airhelp.com/en/?utm_medium=affiliate&amp;utm_source=pap&amp;utm_campaign=aff-69d37834e54fa&amp;a_aid=69d37834e54fa&amp;a_bid=b16056f0" target="_blank" rel="noopener sponsored" onclick="gtag('event', 'click_airhelp', {'event_category': 'affiliate'});" class="mt-4 w-full bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-red-600/20 transition-all duration-200">
+                                Check Eligibility Free <i class="fas fa-arrow-right text-[10px]"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Airalo: eSIM Card -->
+                <div id="cardEsim" class="hidden bg-gradient-to-br from-indigo-950/40 to-blue-900/20 border border-indigo-500/30 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-indigo-500/50 hover:scale-[1.01]">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-indigo-500 text-white flex items-center justify-center text-xl shrink-0 shadow-lg shadow-indigo-500/20">
+                            <i class="fas fa-wifi"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <h4 class="text-sm font-bold text-indigo-200 uppercase tracking-wide" id="esimTitle">eSIM Mobile Data</h4>
+                                <span class="bg-indigo-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Travel eSIM</span>
+                            </div>
+                            <p class="text-xs text-indigo-300/90 mt-2 leading-relaxed">
+                                Avoid expensive roaming fees and long queues for physical SIMs. Install an eSIM and stay connected with high-speed internet the second you touch down.
+                            </p>
+                            <a href="https://airalo.pxf.io/2RKYkg" target="_blank" rel="noopener sponsored" onclick="gtag('event', 'click_esim', {'event_category': 'affiliate'});" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 transition-all duration-200">
+                                Buy eSIM Data <i class="fas fa-arrow-right text-[10px]"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <details id="secondaryTools" class="hidden group rounded-2xl border border-slate-700/70 bg-slate-900/50 overflow-hidden">
+                    <summary class="cursor-pointer list-none flex items-center justify-between px-5 py-4 text-sm font-semibold text-slate-300 hover:text-white transition-colors">
+                        <span><i class="fas fa-suitcase-rolling text-indigo-400 mr-2"></i> More travel options</span>
+                        <i class="fas fa-chevron-down text-xs text-slate-500 transition-transform group-open:rotate-180"></i>
+                    </summary>
+                    <div class="px-3 pb-3 flex flex-col gap-3">
+                <!-- Kiwitaxi: Airport Taxi Transfer Card -->
+                <div id="cardTaxi" class="hidden bg-gradient-to-br from-amber-950/40 to-yellow-950/10 border border-amber-500/20 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-amber-500/45">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-xl shrink-0 shadow-lg shadow-amber-500/20">
+                            <i class="fas fa-taxi"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <h4 class="text-sm font-bold text-amber-200 uppercase tracking-wide" id="taxiTitle">Airport Taxi Transfer</h4>
+                                <span class="bg-amber-500 text-slate-950 text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Fixed Price</span>
+                            </div>
+                            <p class="text-xs text-amber-300/90 mt-2 leading-relaxed">
+                                Skip the airport taxi queues. Pre-book a private transfer. Your professional driver will track your flight, wait for you in the arrival hall with a nameplate, and carry your bags.
+                            </p>
+                            <a href="https://kiwitaxi.tpo.mx/dUq07Ia1" target="_blank" rel="noopener sponsored" onclick="gtag('event', 'click_taxi', {'event_category': 'affiliate'});" class="mt-4 w-full bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition-all duration-200">
+                                Pre-Book Taxi <i class="fas fa-arrow-right text-[10px]"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tours & Tickets Card -->
+                <div id="cardTours" class="hidden bg-gradient-to-br from-purple-950/40 to-fuchsia-900/20 border border-purple-500/30 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-purple-500/50">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-purple-500 text-white flex items-center justify-center text-xl shrink-0 shadow-lg shadow-purple-500/20">
+                            <i class="fas fa-ticket-alt"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <h4 class="text-sm font-bold text-purple-200 uppercase tracking-wide" id="toursTitle">Local Tours &amp; Tickets</h4>
+                                <span class="bg-purple-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Free Cancel</span>
+                            </div>
+                            <p class="text-xs text-purple-300/90 mt-2 leading-relaxed">
+                                Get skip-the-line tickets, guided walking tours, and activities in <span id="toursCityText" class="font-semibold text-purple-200">your destination</span>. Secure your tickets with flexible cancellation.
+                            </p>
+                            <a href="#" id="linkTours" target="_blank" rel="noopener sponsored" onclick="gtag('event', 'click_tours', {'event_category': 'affiliate'});" class="mt-4 w-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-purple-600/20 transition-all duration-200">
+                                Explore Activities <i class="fas fa-arrow-right text-[10px]"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                    </div>
+                </details>
+
+            </div>
+            <p class="text-center text-[10px] leading-relaxed text-slate-600 px-6">Some travel links are affiliate links. They help support Airport Guide at no extra cost to you.</p>
+        </div>
+    </div>
+    </main>
+    <div id="toast" role="status" aria-live="polite" class="fixed left-1/2 bottom-6 -translate-x-1/2 translate-y-3 opacity-0 pointer-events-none z-50 rounded-full bg-slate-800 border border-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-2xl transition-all duration-200">Link copied</div>
+    <script>
+        // ==========================================
+        const WORKER_URL = "https://flightcard-api.andersen-martin.workers.dev";
+        // ==========================================
+
+        let airportDb = {};
+
+        const searchView = document.getElementById('searchView');
+        const loadingView = document.getElementById('loadingView');
+        const resultView = document.getElementById('resultView');
+        const errorMsg = document.getElementById('errorMsg');
+        const searchForm = document.getElementById('searchForm');
+        const flightInput = document.getElementById('flightInput');
+        const searchButton = document.getElementById('searchButton');
+        const defaultSearchIcon = searchButton.innerHTML;
+
+        async function loadAirports() {
+            try {
+                const res = await fetch('https://raw.githubusercontent.com/algolia/datasets/master/airports/airports.json');
+                const data = await res.json();
+                data.forEach(a => {
+                    if(a.iata_code) {
+                        airportDb[a.iata_code] = {
+                            city: a.city || a.name,
+                            country: a.country || '',
+                            lat: a._geoloc ? a._geoloc.lat : null,
+                            lng: a._geoloc ? a._geoloc.lng : null
+                        };
+                    }
+                });
+            } catch(e) { console.log("Kunne ikke hente lufthavne"); }
+        }
+
+        async function getWeather(lat, lng) {
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true`);
+                const data = await res.json();
+                if(data && data.current_weather) {
+                    const temp = Math.round(data.current_weather.temperature);
+                    const code = data.current_weather.weathercode;
+
+                    let icon = 'fa-sun';
+                    if (code >= 1 && code <= 3) icon = 'fa-cloud-sun';
+                    if (code >= 45 && code <= 48) icon = 'fa-smog';
+                    if (code >= 51 && code <= 67) icon = 'fa-cloud-rain';
+                    if (code >= 71 && code <= 77) icon = 'fa-snowflake';
+                    if (code >= 95) icon = 'fa-bolt';
+
+                    document.getElementById('weatherTemp').textContent = `${temp}°C`;
+                    document.getElementById('weatherIcon').className = `fas ${icon}`;
+                    document.getElementById('weatherContainer').classList.remove('hidden');
+                }
+            } catch(e) { console.log("Kunne ikke hente vejret"); }
+        }
+
+        const airportDbReady = loadAirports();
+
+        function getRecentSearches() {
+            try {
+                const value = JSON.parse(localStorage.getItem('flightCardRecents') || '[]');
+                return Array.isArray(value) ? value.filter(item => typeof item === 'string') : [];
+            } catch (_) {
+                return [];
+            }
+        }
+
+        function updateRecentSearches(flightNumber) {
+            let recents = getRecentSearches();
+            recents = recents.filter(f => f !== flightNumber);
+            recents.unshift(flightNumber);
+            if (recents.length > 3) recents.pop();
+            try { localStorage.setItem('flightCardRecents', JSON.stringify(recents)); } catch (_) {}
+            renderRecentSearches();
+        }
+
+        function renderRecentSearches() {
+            const recents = getRecentSearches();
+            const container = document.getElementById('recentSearches');
+            if (recents.length === 0) return container.classList.add('hidden');
+
+            container.innerHTML = '<div class="w-full text-center text-xs text-slate-500 mb-1">Recent searches:</div>';
+            recents.forEach(flight => {
+                const btn = document.createElement('button');
+                btn.className = "px-4 py-1.5 bg-slate-800/80 border border-slate-700 text-slate-300 rounded-full text-sm font-medium hover:bg-indigo-600 hover:text-white transition-colors";
+                btn.textContent = flight;
+                btn.onclick = () => { flightInput.value = flight; searchFlight(flight); };
+                container.appendChild(btn);
+            });
+            container.classList.remove('hidden');
+        }
+        renderRecentSearches();
+
+        window.resetSearch = () => {
+            resultView.classList.add('hidden');
+            searchView.classList.remove('hidden');
+            flightInput.value = '';
+            flightInput.focus();
+            flightInput.setAttribute('aria-invalid', 'false');
+            errorMsg.classList.add('hidden');
+            history.replaceState({}, '', location.pathname);
+
+            const cards = ['cardAirhelp', 'cardEsim', 'cardTaxi', 'cardTours', 'secondaryTools'];
+            cards.forEach(cardId => {
+                const card = document.getElementById(cardId);
+                if (card) card.classList.add('hidden');
+            });
+            const secondaryTools = document.getElementById('secondaryTools');
+            if (secondaryTools) secondaryTools.open = false;
+        };
+
+        searchForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const query = flightInput.value.trim().toUpperCase().replace(/\s+/g, '');
+            if (typeof gtag === 'function') gtag('event', 'search', { 'search_term': query });
+            if (!/^[A-Z0-9]{3,8}$/.test(query) || !/\d/.test(query)) {
+                return showError("Enter a valid flight number, for example SK943.");
+            }
+            searchFlight(query);
+        });
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.classList.remove('hidden');
+            flightInput.setAttribute('aria-invalid', 'true');
+        }
+
+        async function searchFlight(flightNumber) {
+            searchView.classList.add('hidden');
+            errorMsg.classList.add('hidden');
+            flightInput.setAttribute('aria-invalid', 'false');
+            loadingView.classList.remove('hidden');
+            loadingView.classList.add('flex');
+            resultView.classList.add('hidden');
+            searchButton.disabled = true;
+            searchButton.innerHTML = '<i class="fas fa-spinner fa-spin text-lg"></i>';
+
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 12000);
+
+            try {
+                const response = await fetch(`${WORKER_URL}?flight=${encodeURIComponent(flightNumber)}`, {
+                    signal: controller.signal,
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!response.ok) throw new Error(`Flight service returned ${response.status}`);
+                const data = await response.json();
+
+                if (data.error || data.dep_iata === "N/A") {
+                    throw new Error("Flight not found.");
+                }
+
+                await Promise.race([
+                    airportDbReady,
+                    new Promise(resolve => setTimeout(resolve, 1500))
+                ]);
+                populateCard(data);
+                loadingView.classList.add('hidden');
+                loadingView.classList.remove('flex');
+                resultView.classList.remove('hidden');
+                updateRecentSearches(flightNumber);
+                const url = new URL(location.href);
+                url.searchParams.set('flight', flightNumber);
+                history.replaceState({}, '', url);
+                const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+
+            } catch (err) {
+                loadingView.classList.add('hidden');
+                loadingView.classList.remove('flex');
+                searchView.classList.remove('hidden');
+                showError(err.name === 'AbortError'
+                    ? "The live flight service took too long. Please try again."
+                    : "Could not find live data. Check the flight number and try again.");
+            } finally {
+                clearTimeout(timeout);
+                searchButton.disabled = false;
+                searchButton.innerHTML = defaultSearchIcon;
+            }
+        }
+
+        function populateCard(f) {
+            document.getElementById('cardFlightNumber').textContent = f.flight_number;
+            document.getElementById('barcodeFlightNumber').textContent = f.flight_number + '-PASS';
+
+            const logoEl = document.getElementById('cardAirlineLogo');
+            if (f.airline_iata && f.airline_iata !== "N/A") {
+                logoEl.src = `https://pics.avs.io/200/80/${f.airline_iata}.png`;
+                logoEl.style.display = 'block';
+            } else {
+                logoEl.style.display = 'none';
+            }
+
+            document.getElementById('cardDepCode').textContent = f.dep_iata;
+            document.getElementById('cardArrCode').textContent = f.arr_iata;
+            document.getElementById('weatherContainer').classList.add('hidden');
+
+            const depData = airportDb[f.dep_iata];
+            const arrData = airportDb[f.arr_iata];
+
+            const depCityName = depData ? depData.city : 'Departure';
+            const arrCityName = arrData ? arrData.city : 'Arrival';
+            const arrCountryName = arrData ? arrData.country : '';
+
+            document.getElementById('cardDepCity').textContent = depCityName;
+            document.getElementById('cardArrCity').textContent = arrCityName;
+
+            if (arrData && arrData.lat && arrData.lng) {
+                getWeather(arrData.lat, arrData.lng);
+            }
+
+            const formatTime = (timeStr) => {
+                if (!timeStr || timeStr === "N/A") return '--:--';
+                const timeMatch = timeStr.match(/\d{2}:\d{2}/);
+                return timeMatch ? timeMatch[0] : '--:--';
+            };
+
+            document.getElementById('cardDepTime').textContent = formatTime(f.departure_time);
+            document.getElementById('cardArrTime').textContent = formatTime(f.arrival_time);
+
+            document.getElementById('cardDepTerminal').textContent = f.terminal !== "N/A" ? f.terminal : '-';
+            document.getElementById('cardDepGate').textContent = f.gate !== "N/A" ? f.gate : 'TBA';
+            document.getElementById('cardArrGate').textContent = f.arr_gate && f.arr_gate !== "N/A" ? f.arr_gate : '-';
+            document.getElementById('cardBaggageBelt').textContent = f.baggage_belt !== "N/A" ? f.baggage_belt : '-';
+
+            const progressBar = document.getElementById('routeProgressBar');
+            const planeIcon = document.getElementById('routePlaneIcon');
+            const durationLabel = document.getElementById('flightDuration');
+            const routeStatusLabel = document.getElementById('routeStatusLabel');
+
+            let hasValidTimeline = false;
+
+            if (f.departure_time && f.arrival_time && f.departure_time !== "N/A" && f.arrival_time !== "N/A") {
+                const depDate = new Date(f.departure_time);
+                const arrDate = new Date(f.arrival_time);
+
+                if (!isNaN(depDate) && !isNaN(arrDate)) {
+                    const diffMs = arrDate - depDate;
+                    if (diffMs > 0) {
+                        hasValidTimeline = true;
+                        const diffHrs = Math.floor(diffMs / 3600000);
+                        const diffMins = Math.round((diffMs % 3600000) / 60000);
+                        if (durationLabel) durationLabel.textContent = `${diffHrs}h ${diffMins}m`;
+
+                        const now = new Date();
+                        let percent = 0;
+                        if (now > depDate && now < arrDate) {
+                            percent = ((now - depDate) / diffMs) * 100;
+                            if (routeStatusLabel) routeStatusLabel.textContent = "In Flight";
+                        } else if (now >= arrDate) {
+                            percent = 100;
+                            if (routeStatusLabel) routeStatusLabel.textContent = "Arrived";
+                        } else {
+                            percent = 0;
+                            if (routeStatusLabel) routeStatusLabel.textContent = "Scheduled";
+                        }
+                        percent = Math.max(0, Math.min(100, percent));
+                        if (progressBar) progressBar.style.width = `${percent}%`;
+                        if (planeIcon) planeIcon.style.left = `calc(${percent}% - 6px)`;
+                    }
+                }
+            }
+
+            if (!hasValidTimeline && durationLabel) {
+                durationLabel.textContent = "Direct";
+                progressBar.style.width = "0%";
+                planeIcon.style.left = "50%";
+                routeStatusLabel.textContent = "Live Status";
+            }
+
+            const statusStr = String(f.status).toLowerCase();
+            const isCancelled = statusStr.includes('cancel');
+            const delayMins = f.delay_mins || 0;
+
+            let sBg = 'bg-slate-200', sText = 'text-slate-700', sIcon = 'fa-clock', sLabel = 'Scheduled';
+            let headerGradient = 'from-slate-700 to-slate-900';
+
+            if (statusStr.includes('active') || statusStr.includes('en-route')) {
+                sBg = 'bg-blue-100'; sText = 'text-indigo-700'; sIcon = 'fa-plane'; sLabel = 'In Air';
+                headerGradient = 'from-indigo-600 to-blue-700';
+                if(routeStatusLabel) routeStatusLabel.innerHTML = 'In Air <span class="pulse-live-dot ml-1 text-indigo-500"></span>';
+            } else if (statusStr.includes('landed') || statusStr.includes('arrived')) {
+                sBg = 'bg-emerald-100'; sText = 'text-emerald-800'; sIcon = 'fa-check-circle'; sLabel = 'Landed';
+                headerGradient = 'from-emerald-600 to-teal-800';
+                if(routeStatusLabel) routeStatusLabel.textContent = "Landed";
+            } else if (isCancelled) {
+                sBg = 'bg-rose-100'; sText = 'text-red-700'; sIcon = 'fa-ban'; sLabel = 'Cancelled';
+                headerGradient = 'from-rose-600 to-red-800';
+                if(routeStatusLabel) routeStatusLabel.textContent = "Cancelled";
+            } else if (delayMins > 15) {
+                sBg = 'bg-amber-100'; sText = 'text-amber-800'; sIcon = 'fa-exclamation-triangle'; sLabel = `Delayed (${delayMins}m)`;
+                headerGradient = 'from-amber-500 to-orange-600';
+                if(routeStatusLabel) routeStatusLabel.textContent = `Delayed +${delayMins}m`;
+            }
+
+            const badge = document.getElementById('cardStatusBadge');
+            badge.className = `px-5 py-2.5 rounded-full font-extrabold text-xs uppercase tracking-widest shadow-md flex items-center gap-2 ${sBg} ${sText}`;
+
+            if (sLabel === 'In Air') {
+                badge.innerHTML = `<i class="fas ${sIcon} animate-bounce"></i> ${sLabel} <span class="pulse-live-dot bg-indigo-700"></span>`;
+            } else {
+                badge.innerHTML = `<i class="fas ${sIcon}"></i> ${sLabel} <i class="fas fa-check text-[10px] opacity-70 ml-1" title="Verified API"></i>`;
+            }
+
+            document.getElementById('cardHeader').className = `bg-gradient-to-r ${headerGradient} text-white p-6 pt-12 rounded-t-[28px] flex justify-between items-center relative overflow-hidden transition-colors duration-500 shadow-inner`;
+
+            const cardAirhelp = document.getElementById('cardAirhelp');
+            const cardEsim = document.getElementById('cardEsim');
+            const cardTaxi = document.getElementById('cardTaxi');
+            const cardTours = document.getElementById('cardTours');
+
+            [cardAirhelp, cardEsim, cardTaxi, cardTours].forEach(card => {
+                if(card) card.classList.add('hidden');
+            });
+
+            const esimLocName = arrCountryName || arrCityName;
+            document.getElementById('esimTitle').textContent = `eSIM Mobile Data · ${esimLocName}`;
+            document.getElementById('taxiTitle').textContent = `Airport Taxi · ${arrCityName}`;
+            document.getElementById('toursTitle').textContent = `Tours & Experiences · ${arrCityName}`;
+            document.getElementById('toursCityText').textContent = arrCityName;
+
+            const toursLink = document.getElementById('linkTours');
+            if (toursLink) {
+                toursLink.href = `https://www.viator.com/searchResults/all?text=${encodeURIComponent(arrCityName)}`;
+            }
+
+            if (isCancelled || delayMins >= 180) {
+                if(cardAirhelp) cardAirhelp.classList.remove('hidden');
+                if(cardTaxi) cardTaxi.classList.remove('hidden');
+                if(cardTours) cardTours.classList.remove('hidden');
+            } else {
+                if(cardEsim) cardEsim.classList.remove('hidden');
+                if(cardTaxi) cardTaxi.classList.remove('hidden');
+                if(cardTours) cardTours.classList.remove('hidden');
+            }
+            const secondaryTools = document.getElementById('secondaryTools');
+            if (secondaryTools) secondaryTools.classList.remove('hidden');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('toast-visible');
+            clearTimeout(showToast.timer);
+            showToast.timer = setTimeout(() => toast.classList.remove('toast-visible'), 2200);
+        }
+
+        async function shareFlight() {
+            const flightNumber = document.getElementById('cardFlightNumber').textContent;
+            const shareUrl = new URL(location.href);
+            shareUrl.searchParams.set('flight', flightNumber);
+            const shareData = {
+                title: `${flightNumber} live flight status`,
+                text: `Live gate, terminal and timing details for ${flightNumber}`,
+                url: shareUrl.toString()
+            };
+
+            try {
+                if (navigator.share) {
+                    await navigator.share(shareData);
+                    if (typeof gtag === 'function') gtag('event', 'share_flight', { method: 'native' });
+                } else {
+                    await navigator.clipboard.writeText(shareData.url);
+                    showToast('Flight link copied');
+                    if (typeof gtag === 'function') gtag('event', 'share_flight', { method: 'clipboard' });
+                }
+            } catch (err) {
+                if (err.name !== 'AbortError') showToast('Could not share this flight');
+            }
+        }
+
+        async function downloadPass() {
+            const btn = document.getElementById('downloadBtnIcon');
+            const originalIcon = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin text-sm"></i>';
+
+            try {
+                await document.fonts.ready;
+                const element = document.getElementById('boardingPassCard');
+
+                document.getElementById('backBtnIcon').style.display = 'none';
+                document.getElementById('shareBtnIcon').style.display = 'none';
+                document.getElementById('downloadBtnIcon').style.display = 'none';
+
+                const canvas = await html2canvas(element, {
+                    scale: 3,
+                    backgroundColor: null,
+                    useCORS: true,
+                    logging: false,
+                    borderRadius: 28
+                });
+
+                document.getElementById('backBtnIcon').style.display = 'flex';
+                document.getElementById('shareBtnIcon').style.display = 'flex';
+                document.getElementById('downloadBtnIcon').style.display = 'flex';
+
+                const imgData = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `FlightCard-${document.getElementById('cardFlightNumber').textContent}.png`;
+                link.href = imgData;
+                link.click();
+
+                btn.innerHTML = '<i class="fas fa-check text-emerald-400 text-sm"></i>';
+                setTimeout(() => { btn.innerHTML = originalIcon; }, 2000);
+
+            } catch (err) {
+                console.error('Fejl ved download:', err);
+                btn.innerHTML = originalIcon;
+            } finally {
+                document.getElementById('backBtnIcon').style.display = 'flex';
+                document.getElementById('shareBtnIcon').style.display = 'flex';
+                document.getElementById('downloadBtnIcon').style.display = 'flex';
+            }
+        }
+
+        const initialFlight = new URLSearchParams(location.search).get('flight');
+        if (initialFlight) {
+            const normalized = initialFlight.trim().toUpperCase().replace(/\s+/g, '');
+            if (/^[A-Z0-9]{3,8}$/.test(normalized) && /\d/.test(normalized)) {
+                flightInput.value = normalized;
+                searchFlight(normalized);
+            }
+        }
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then((reg) => console.log('Service Worker registered successfully!', reg))
+                    .catch((err) => console.log('Service Worker registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
