@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
     <title>Live Flight Status &amp; Tracker | Check Gates &amp; Delays</title>
-    <meta name="description" content="Track real-time flight status, gate changes, and delays. Check your flight number instantly and see if you qualify for €600 in flight compensation.">
+    <meta name="description" content="Track live flight status, gates and delays by flight number or boarding pass. Boarding passes are read privately on your device.">
     <meta name="keywords" content="flight status, live flight tracker, check flight delay, gate number, airport departures">
 
     <link rel="manifest" href="manifest.json">
@@ -157,6 +157,23 @@
                 <span><i class="fas fa-bolt text-amber-400/80 mr-1"></i> Live status</span>
                 <span><i class="fas fa-lock text-emerald-400/80 mr-1"></i> No sign-up</span>
             </div>
+            <div class="flex items-center gap-3 my-5" aria-hidden="true">
+                <div class="h-px flex-1 bg-slate-700/70"></div>
+                <span class="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">or</span>
+                <div class="h-px flex-1 bg-slate-700/70"></div>
+            </div>
+            <input id="boardingPassInput" class="sr-only" type="file" accept="image/*,application/pdf,.pdf">
+            <label id="boardingPassLabel" for="boardingPassInput" class="group flex w-full cursor-pointer items-center gap-4 rounded-2xl border border-dashed border-slate-600 bg-slate-800/35 px-5 py-4 text-left transition-colors hover:border-indigo-400 hover:bg-slate-800/70">
+                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-xl text-indigo-300">
+                    <i class="fas fa-file-arrow-up"></i>
+                </span>
+                <span class="min-w-0 flex-1">
+                    <span class="block text-sm font-bold text-slate-200">Upload boarding pass</span>
+                    <span class="mt-0.5 block text-[11px] leading-relaxed text-slate-500">Photo or PDF · read privately on this device</span>
+                </span>
+                <i class="fas fa-chevron-right text-xs text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-300"></i>
+            </label>
+            <div id="boardingPassStatus" role="status" aria-live="polite" class="mt-3 hidden rounded-xl border px-4 py-3 text-center text-sm font-medium"></div>
             <div id="errorMsg" role="alert" aria-live="polite" class="text-red-300 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-center mt-4 hidden font-medium fade-in"></div>
         </form>
 
@@ -165,7 +182,7 @@
         <div class="mt-16 max-w-sm mx-auto text-center px-4 pb-8">
             <h2 class="text-slate-500 font-bold text-[10px] uppercase tracking-widest mb-3">One flight. The details that matter.</h2>
             <p class="text-slate-500 text-xs leading-relaxed">
-                Search by flight number to see current departure and arrival times, terminals, gates, baggage belt and delay status in one clean flight card.
+                Search by flight number or add a boarding pass to see current times, terminals, gates, baggage belt and delay status in one clean flight card.
             </p>
         </div>
 
@@ -339,6 +356,29 @@
             </div>
         </div>
 
+        <section id="uploadedPassCard" class="mt-5 hidden overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 shadow-xl" aria-label="Uploaded boarding pass">
+            <div class="flex items-center gap-4 p-4">
+                <img id="uploadedPassThumbnail" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="" class="hidden h-16 w-16 shrink-0 rounded-xl border border-white/10 bg-white object-cover">
+                <div id="uploadedPassFileIcon" class="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-2xl text-rose-300">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[9px] font-black uppercase tracking-widest text-emerald-400">On this device</span>
+                        <i class="fas fa-lock text-[9px] text-emerald-400/80"></i>
+                    </div>
+                    <h3 class="mt-1 text-sm font-bold text-slate-100">Your boarding pass</h3>
+                    <p id="uploadedPassName" class="mt-0.5 truncate text-[11px] text-slate-500"></p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 border-t border-slate-800">
+                <a id="openUploadedPass" href="#" target="_blank" rel="noopener" class="flex min-h-11 items-center justify-center gap-2 border-r border-slate-800 text-xs font-bold text-indigo-300 hover:bg-slate-800/80">
+                    <i class="fas fa-up-right-from-square"></i> Open file
+                </a>
+                <button id="removeUploadedPass" type="button" class="min-h-11 text-xs font-bold text-slate-400 hover:bg-slate-800/80 hover:text-white">Remove</button>
+            </div>
+        </section>
+
         <!-- 2. Contextual travel offers -->
         <div id="travelToolkit" class="mt-8 space-y-5">
             <div class="flex items-center justify-center gap-2">
@@ -464,6 +504,22 @@
         const flightInput = document.getElementById('flightInput');
         const searchButton = document.getElementById('searchButton');
         const defaultSearchIcon = searchButton.innerHTML;
+        const boardingPassInput = document.getElementById('boardingPassInput');
+        const boardingPassLabel = document.getElementById('boardingPassLabel');
+        const boardingPassStatus = document.getElementById('boardingPassStatus');
+        const uploadedPassCard = document.getElementById('uploadedPassCard');
+        const uploadedPassThumbnail = document.getElementById('uploadedPassThumbnail');
+        const uploadedPassFileIcon = document.getElementById('uploadedPassFileIcon');
+        const uploadedPassName = document.getElementById('uploadedPassName');
+        const openUploadedPass = document.getElementById('openUploadedPass');
+        const removeUploadedPass = document.getElementById('removeUploadedPass');
+
+        const MAX_BOARDING_PASS_BYTES = 15 * 1024 * 1024;
+        const ZXING_URL = 'https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.1/umd/zxing-browser.min.js';
+        const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.mjs';
+        const PDFJS_WORKER_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.worker.mjs';
+        let uploadedPassUrl = '';
+        let barcodeLibraryPromise;
 
         async function loadAirports() {
             try {
@@ -595,6 +651,262 @@
         }
         renderRecentSearches();
 
+        function setBoardingPassStatus(message, tone = 'neutral') {
+            const toneClasses = {
+                neutral: 'border-indigo-400/20 bg-indigo-500/10 text-indigo-200',
+                success: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-200',
+                warning: 'border-amber-400/20 bg-amber-500/10 text-amber-100',
+                error: 'border-red-400/20 bg-red-500/10 text-red-200'
+            };
+            boardingPassStatus.className = `mt-3 rounded-xl border px-4 py-3 text-center text-sm font-medium ${toneClasses[tone] || toneClasses.neutral}`;
+            boardingPassStatus.textContent = message;
+        }
+
+        function hideBoardingPassStatus() {
+            boardingPassStatus.classList.add('hidden');
+            boardingPassStatus.textContent = '';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+            return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+        }
+
+        function clearUploadedBoardingPass() {
+            if (uploadedPassUrl) URL.revokeObjectURL(uploadedPassUrl);
+            uploadedPassUrl = '';
+            uploadedPassCard.classList.add('hidden');
+            uploadedPassThumbnail.classList.add('hidden');
+            uploadedPassThumbnail.removeAttribute('src');
+            uploadedPassFileIcon.classList.remove('hidden');
+            uploadedPassName.textContent = '';
+            openUploadedPass.removeAttribute('href');
+            boardingPassInput.value = '';
+        }
+
+        function rememberUploadedBoardingPass(file) {
+            clearUploadedBoardingPass();
+            uploadedPassUrl = URL.createObjectURL(file);
+            uploadedPassName.textContent = `${file.name || 'Boarding pass'} · ${formatFileSize(file.size)}`;
+            openUploadedPass.href = uploadedPassUrl;
+            uploadedPassCard.classList.remove('hidden');
+
+            if (file.type.startsWith('image/')) {
+                uploadedPassThumbnail.src = uploadedPassUrl;
+                uploadedPassThumbnail.classList.remove('hidden');
+                uploadedPassFileIcon.classList.add('hidden');
+            }
+        }
+
+        function normalizeFlightNumber(carrier, number) {
+            const cleanCarrier = String(carrier || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+            let cleanNumber = String(number || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+            if (!cleanCarrier || !/[A-Z]/.test(cleanCarrier) || !/\d/.test(cleanNumber)) return null;
+            cleanNumber = cleanNumber.replace(/^0+(?=\d)/, '');
+            const candidate = cleanCarrier + cleanNumber;
+            return /^[A-Z0-9]{3,8}$/.test(candidate) && /\d/.test(candidate) ? candidate : null;
+        }
+
+        function extractFlightNumber(text, allowGeneric = false) {
+            const raw = String(text || '').replace(/[\u0000-\u001f]+/g, ' ').trim();
+            if (!raw) return null;
+
+            // IATA Bar Coded Boarding Pass (BCBP): first flight leg uses fixed positions.
+            const bcbpStart = raw.search(/M[1-4]/);
+            if (bcbpStart >= 0) {
+                const bcbp = raw.slice(bcbpStart);
+                if (bcbp.length >= 44) {
+                    const fixedCandidate = normalizeFlightNumber(bcbp.slice(36, 39), bcbp.slice(39, 44));
+                    if (fixedCandidate) return fixedCandidate;
+                }
+            }
+
+            const labelled = raw.match(/(?:FLIGHT(?:\s*(?:NO\.?|NUMBER))?|FLT\.?|FLUG|VOL|FLY)\s*[:#-]?\s*([A-Z0-9]{2,3})[\s-]*0*(\d{1,4}[A-Z]?)/i);
+            if (labelled) {
+                const labelledCandidate = normalizeFlightNumber(labelled[1], labelled[2]);
+                if (labelledCandidate) return labelledCandidate;
+            }
+
+            if (allowGeneric || raw.length <= 160) {
+                const generic = raw.match(/\b([A-Z][A-Z0-9]|[0-9][A-Z])[\s-]*0*(\d{1,4}[A-Z]?)\b/i);
+                if (generic) return normalizeFlightNumber(generic[1], generic[2]);
+            }
+            return null;
+        }
+
+        function loadBarcodeLibrary() {
+            if (window.ZXingBrowser) return Promise.resolve(window.ZXingBrowser);
+            if (barcodeLibraryPromise) return barcodeLibraryPromise;
+            barcodeLibraryPromise = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = ZXING_URL;
+                script.async = true;
+                script.onload = () => resolve(window.ZXingBrowser);
+                script.onerror = () => reject(new Error('Barcode reader could not be loaded'));
+                document.head.appendChild(script);
+            });
+            return barcodeLibraryPromise;
+        }
+
+        async function detectWithNativeBarcodeDetector(source) {
+            if (!('BarcodeDetector' in window)) return [];
+            try {
+                const supported = typeof BarcodeDetector.getSupportedFormats === 'function'
+                    ? await BarcodeDetector.getSupportedFormats()
+                    : [];
+                const wanted = ['aztec', 'data_matrix', 'pdf417', 'qr_code', 'code_128']
+                    .filter(format => supported.length === 0 || supported.includes(format));
+                if (wanted.length === 0) return [];
+                const detector = new BarcodeDetector({ formats: wanted });
+                const detections = await detector.detect(source);
+                return detections.map(item => item.rawValue).filter(Boolean);
+            } catch (_) {
+                return [];
+            }
+        }
+
+        function flightFromBarcodeValues(values) {
+            for (const value of values) {
+                const flightNumber = extractFlightNumber(value, true);
+                if (flightNumber) return flightNumber;
+            }
+            return null;
+        }
+
+        async function scanCanvasForFlight(canvas) {
+            const nativeFlight = flightFromBarcodeValues(await detectWithNativeBarcodeDetector(canvas));
+            if (nativeFlight) return nativeFlight;
+
+            try {
+                const ZXing = await loadBarcodeLibrary();
+                const reader = new ZXing.BrowserMultiFormatReader();
+                const result = reader.decodeFromCanvas(canvas);
+                return extractFlightNumber(result.getText(), true);
+            } catch (_) {
+                return null;
+            }
+        }
+
+        function loadImage(url) {
+            return new Promise((resolve, reject) => {
+                const image = new Image();
+                image.onload = () => resolve(image);
+                image.onerror = () => reject(new Error('Image could not be read'));
+                image.src = url;
+            });
+        }
+
+        async function scanImageForFlight(file) {
+            if ('createImageBitmap' in window) {
+                try {
+                    const bitmap = await createImageBitmap(file);
+                    const nativeFlight = flightFromBarcodeValues(await detectWithNativeBarcodeDetector(bitmap));
+                    bitmap.close();
+                    if (nativeFlight) return nativeFlight;
+                } catch (_) {}
+            }
+
+            try {
+                const image = await loadImage(uploadedPassUrl);
+                const ZXing = await loadBarcodeLibrary();
+                const reader = new ZXing.BrowserMultiFormatReader();
+                const result = await reader.decodeFromImageElement(image);
+                return extractFlightNumber(result.getText(), true);
+            } catch (_) {
+                return null;
+            }
+        }
+
+        async function scanPdfForFlight(file) {
+            const pdfjs = await import(PDFJS_URL);
+            pdfjs.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+            const data = new Uint8Array(await file.arrayBuffer());
+            const pdf = await pdfjs.getDocument({ data }).promise;
+            const pageCount = Math.min(pdf.numPages, 3);
+
+            // Most airline-generated PDFs contain selectable text.
+            for (let pageNumber = 1; pageNumber <= pageCount; pageNumber++) {
+                const page = await pdf.getPage(pageNumber);
+                const textContent = await page.getTextContent();
+                const text = textContent.items.map(item => item.str || '').join(' ');
+                const flightNumber = extractFlightNumber(text);
+                if (flightNumber) return flightNumber;
+            }
+
+            // Scanned PDFs often still contain a machine-readable 2D barcode.
+            for (let pageNumber = 1; pageNumber <= Math.min(pageCount, 2); pageNumber++) {
+                const page = await pdf.getPage(pageNumber);
+                const baseViewport = page.getViewport({ scale: 1 });
+                const scale = Math.min(2.25, Math.sqrt(6000000 / (baseViewport.width * baseViewport.height)));
+                const viewport = page.getViewport({ scale });
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.ceil(viewport.width);
+                canvas.height = Math.ceil(viewport.height);
+                const context = canvas.getContext('2d', { alpha: false });
+                await page.render({ canvasContext: context, viewport }).promise;
+                const flightNumber = await scanCanvasForFlight(canvas);
+                canvas.width = 1;
+                canvas.height = 1;
+                if (flightNumber) return flightNumber;
+            }
+            return null;
+        }
+
+        async function processBoardingPass(file) {
+            if (!file) return;
+            const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+            const isImage = file.type.startsWith('image/');
+
+            if (!isPdf && !isImage) {
+                setBoardingPassStatus('Choose a boarding pass as a photo or PDF.', 'error');
+                boardingPassInput.value = '';
+                return;
+            }
+            if (file.size > MAX_BOARDING_PASS_BYTES) {
+                setBoardingPassStatus('That file is larger than 15 MB. Choose a smaller photo or PDF.', 'error');
+                boardingPassInput.value = '';
+                return;
+            }
+
+            rememberUploadedBoardingPass(file);
+            boardingPassLabel.setAttribute('aria-busy', 'true');
+            setBoardingPassStatus('Reading your boarding pass on this device…');
+            errorMsg.classList.add('hidden');
+
+            try {
+                let flightNumber = extractFlightNumber(file.name, true);
+                if (!flightNumber) {
+                    flightNumber = isPdf
+                        ? await scanPdfForFlight(file)
+                        : await scanImageForFlight(file);
+                }
+
+                if (!flightNumber) {
+                    setBoardingPassStatus('We could not read the flight number. Try a clearer file or enter it above.', 'warning');
+                    return;
+                }
+
+                flightInput.value = flightNumber;
+                setBoardingPassStatus(`Found ${flightNumber}. Loading live flight details…`, 'success');
+                if (typeof gtag === 'function') {
+                    gtag('event', 'boarding_pass_read', { file_type: isPdf ? 'pdf' : 'image' });
+                }
+                await searchFlight(flightNumber);
+            } catch (error) {
+                console.error('Boarding pass reading failed:', error);
+                setBoardingPassStatus('We could not read this boarding pass. Enter the flight number above instead.', 'warning');
+            } finally {
+                boardingPassLabel.removeAttribute('aria-busy');
+                boardingPassInput.value = '';
+            }
+        }
+
+        boardingPassInput.addEventListener('change', () => processBoardingPass(boardingPassInput.files?.[0]));
+        removeUploadedPass.addEventListener('click', () => {
+            clearUploadedBoardingPass();
+            showToast('Boarding pass removed');
+        });
+
         window.resetSearch = () => {
             resultView.classList.add('hidden');
             searchView.classList.remove('hidden');
@@ -602,6 +914,8 @@
             flightInput.focus();
             flightInput.setAttribute('aria-invalid', 'false');
             errorMsg.classList.add('hidden');
+            clearUploadedBoardingPass();
+            hideBoardingPassStatus();
             history.replaceState({}, '', location.pathname);
 
             const cards = ['cardAirhelp', 'cardEsim', 'cardTaxi', 'cardTours', 'secondaryTools'];
