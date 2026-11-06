@@ -145,7 +145,7 @@ test('partner clicks cannot masquerade as purchases or revenue', () => {
 test('all public pages use the same loader without an unconditional Google or Drive tag', () => {
     for (const path of ['index.html', 'guides/dubai/index.html', 'privacy/index.html']) {
         const html = readFileSync(join(__dirname, '..', path), 'utf8');
-        assert.match(html, /src="\/assets\/analytics\.js"/);
+        assert.match(html, /src="\/assets\/analytics\.js(?:\?v=[a-z0-9-]+)?"/);
         assert.doesNotMatch(html, /<script[^>]+src="https:\/\/www\.googletagmanager/);
         assert.doesNotMatch(html, /tp-em\.com/);
         assert.match(html, /data-cookie-settings/);

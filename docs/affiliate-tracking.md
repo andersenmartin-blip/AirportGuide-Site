@@ -34,6 +34,8 @@ An affiliate click is not a sale. Revenue and approved commissions must come fro
 
 `assets/analytics.js` is the single loader on the search page, Dubai guide and privacy page. It blocks Google requests until a visitor allows analytics, retains the existing measurement ID `G-YYW1KW4CGN`, and keeps advertising storage/user-data/personalization denied. Declining leaves search, uploads and links functional. The choice is remembered for 180 days; withdrawal clears Analytics cookies and reloads the page. Preview hosts never load the production tag. Consent-aware metrics cover consenting visitors and are not a census of all traffic.
 
+The three changed measurement assets use a release query version in the HTML and service-worker precache. This avoids an observed upgrade issue where an older service worker supplied an old link script alongside new HTML on the first visit. Bump the asset version alongside future changes to these scripts/styles.
+
 Page locations and referrers sent through this loader omit private query strings. Only bounded campaign labels are carried between the flight page and Dubai guide; `flight`, booking data and unique click identifiers are not copied by this code. Google’s own campaign attribution applies within Analytics; unique click identifiers are not sent to affiliate reports.
 
 For the proposed campaign, the ready-to-use landing URL is:
