@@ -105,3 +105,32 @@ test('an unavailable analytics service cannot break link handling', () => {
     const link = { dataset: { provider: 'airalo', affiliate: 'true' }, hasAttribute: () => false };
     assert.doesNotThrow(() => handlers.click({ type: 'click', target: { closest: () => link } }));
 });
+
+test('context markers distinguish Dubai guide clicks from flight result clicks', () => {
+    const { api } = boot();
+    const guide = { airport: 'DXB', placement: 'dubai_guide', campaign: 'dubai_arrivals_test' };
+    const result = { airport: 'DXB', placement: 'flight_result', campaign: 'dubai_arrivals_test' };
+    const airalo = new URL(api.resolve('airalo', '', api.links, guide).url);
+    const taxi = new URL(api.resolve('kiwitaxi', '', api.links, guide).url);
+    assert.equal(airalo.pathname, '/2RKYkg');
+    assert.equal(taxi.pathname, '/dUq07Ia1');
+    assert.equal(airalo.searchParams.get('subId1'), 'ag_dubai_guide_dxb_dubai_test');
+    assert.equal(taxi.searchParams.get('sub_id'), 'ag_dubai_guide_dxb_dubai_test');
+    assert.notEqual(api.subId(guide), api.subId(result));
+});
+
+test('campaign markers never include arbitrary URL values or visitor identifiers', () => {
+    const { api } = boot();
+    assert.equal(api.subId({ airport: 'PRIVATE', placement: 'passenger@example.com', campaign: 'PRIVATE-BOOKING' }), 'ag_site_general_other');
+});
+
+test('replacement publisher links are accepted without hardcoding an old publisher path', () => {
+    const { api } = boot();
+    const link = api.resolve('airalo', '', { airalo: 'https://airalo.pxf.io/NEW-PUBLISHER?existing=keep' }, { airport: 'DXB', placement: 'dubai_guide' });
+    const url = new URL(link.url);
+    assert.equal(link.affiliate, true);
+    assert.equal(url.pathname, '/NEW-PUBLISHER');
+    assert.equal(url.searchParams.get('existing'), 'keep');
+    assert.equal(url.searchParams.get('subId1'), 'ag_dubai_guide_dxb_other');
+    assert.equal(api.resolve('airalo', '', { airalo: 'https://unrelated.invalid/' }), null);
+});

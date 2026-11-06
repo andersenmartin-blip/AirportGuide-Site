@@ -1,12 +1,15 @@
-const CACHE_NAME = 'airportguide-v3';
+const CACHE_NAME = 'airportguide-v4';
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './tz-lookup.min.js',
   './assets/partner-links.js',
+  './assets/analytics.js',
+  './assets/analytics.css',
   './assets/guide.css',
-  './guides/dubai/'
+  './guides/dubai/',
+  './privacy/'
 ];
 
 self.addEventListener('install', (event) => {

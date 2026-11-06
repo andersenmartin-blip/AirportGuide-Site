@@ -19,6 +19,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="tz-lookup.min.js"></script>
+    <link rel="stylesheet" href="/assets/analytics.css">
+    <script src="/assets/analytics.js" defer></script>
     <script src="/assets/partner-links.js" defer></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
@@ -107,21 +109,6 @@
             }
         }
     </style>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-YYW1KW4CGN"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){ if (['airportguideapp.com', 'www.airportguideapp.com'].includes(location.hostname)) dataLayer.push(arguments); }
-  gtag('js', new Date());
-  gtag('config', 'G-YYW1KW4CGN');
-</script>
-<script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1">
-  (function () {
-      var script = document.createElement("script");
-      script.async = 1;
-      script.src = 'https://tp-em.com/NTE3ODI2.js?t=517826';
-      document.head.appendChild(script);
-  })();
-</script>
 </head>
 <body class="flex flex-col items-center px-4 overflow-x-hidden min-h-[100svh] safe-bottom selection:bg-indigo-500/30">
 
@@ -379,10 +366,10 @@
                         <div class="flex-grow">
                             <div class="flex items-center justify-between flex-wrap gap-2">
                                 <h4 class="text-sm font-bold text-amber-200 uppercase tracking-wide" id="taxiTitle">Airport Taxi Transfer</h4>
-                                <span class="bg-amber-500 text-slate-950 text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Fixed Price</span>
+                                <span class="bg-amber-500 text-slate-950 text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Private transfer</span>
                             </div>
                             <p class="text-xs text-amber-300/90 mt-2 leading-relaxed">
-                                Skip the airport taxi queues. Pre-book a private transfer. Your professional driver will track your flight, wait for you in the arrival hall with a nameplate, and carry your bags.
+                                Compare a private airport transfer for your group and luggage. Check the full quote, meeting point, waiting time and cancellation terms before booking.
                             </p>
                             <a href="https://kiwitaxi.tpo.mx/dUq07Ia1" target="_blank" rel="noopener sponsored" data-provider="kiwitaxi" data-placement="flight_result" class="mt-4 w-full bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition-all duration-200">
                                 Pre-Book Taxi <i class="fas fa-arrow-right text-[10px]"></i>
@@ -419,6 +406,7 @@
         </div>
     </div>
     </main>
+    <footer class="ag-privacy-footer"><a href="/privacy/">Privacy &amp; cookies</a> · <button class="ag-cookie-settings" type="button" data-cookie-settings>Cookie settings</button></footer>
     <div id="toast" role="status" aria-live="polite" class="fixed left-1/2 bottom-6 -translate-x-1/2 translate-y-3 opacity-0 pointer-events-none z-50 rounded-full bg-slate-800 border border-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-2xl transition-all duration-200">Link copied</div>
     <script>
         // ==========================================
@@ -575,7 +563,7 @@
                 const btn = document.createElement('button');
                 btn.className = "px-4 py-1.5 bg-slate-800/80 border border-slate-700 text-slate-300 rounded-full text-sm font-medium hover:bg-indigo-600 hover:text-white transition-colors";
                 btn.textContent = flight;
-                btn.onclick = () => { flightInput.value = flight; searchFlight(flight); };
+                btn.onclick = () => { flightInput.value = flight; searchFlight(flight, 'recent'); };
                 container.appendChild(btn);
             });
             container.classList.remove('hidden');
@@ -830,7 +818,7 @@
                 if (typeof gtag === 'function') {
                     gtag('event', 'boarding_pass_read', { file_type: isPdf ? 'pdf' : 'image' });
                 }
-                await searchFlight(flightNumber);
+                await searchFlight(flightNumber, 'boarding_pass');
             } catch (error) {
                 console.error('Boarding pass reading failed:', error);
                 setBoardingPassStatus('We could not read this boarding pass. Enter the flight number above instead.', 'warning');
@@ -869,7 +857,6 @@
         searchForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const query = normalizeFlightQuery(flightInput.value);
-            if (typeof gtag === 'function') gtag('event', 'search', { 'search_term': query });
             if (!/^[A-Z0-9]{3,8}$/.test(query) || !/\d/.test(query)) {
                 return showError("Enter a valid flight number, for example SK943.");
             }
@@ -882,10 +869,11 @@
             flightInput.setAttribute('aria-invalid', 'true');
         }
 
-        async function searchFlight(flightNumber) {
+        async function searchFlight(flightNumber, method = 'manual') {
             // All entry points, including recent searches and boarding passes,
             // use the same number before contacting the flight service.
             flightNumber = normalizeFlightQuery(flightNumber);
+            if (typeof gtag === 'function') gtag('event', 'flight_search_started', { method });
             flightInput.value = flightNumber;
             searchView.classList.add('hidden');
             errorMsg.classList.add('hidden');
@@ -929,6 +917,7 @@
                 window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
 
             } catch (err) {
+                if (typeof gtag === 'function') gtag('event', 'flight_search_failed', { reason: err.name === 'AbortError' ? 'timeout' : 'unavailable', method });
                 loadingView.classList.add('hidden');
                 loadingView.classList.remove('flex');
                 searchView.classList.remove('hidden');
@@ -1196,7 +1185,7 @@
             const normalized = normalizeFlightQuery(initialFlight);
             if (/^[A-Z0-9]{3,8}$/.test(normalized) && /\d/.test(normalized)) {
                 flightInput.value = normalized;
-                searchFlight(normalized);
+                searchFlight(normalized, 'shared_link');
             }
         }
 
