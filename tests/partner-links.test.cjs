@@ -4,12 +4,12 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const script = readFileSync(require('node:path').join(__dirname, '../assets/partner-links.js'), 'utf8');
 
-function boot({ gtag, cards = [], anchors = [] } = {}) {
+function boot({ gtag, cards = [], anchors = [], airport = 'DXB' } = {}) {
     const handlers = {};
     let intersection;
     const window = { gtag };
     const document = {
-        body: { dataset: { arrivalAirport: 'DXB' } },
+        body: { dataset: { arrivalAirport: airport } },
         querySelectorAll: selector => selector === 'a[data-provider]' ? anchors : cards,
         addEventListener: (name, handler) => { handlers[name] = handler; }
     };
@@ -133,4 +133,25 @@ test('replacement publisher links are accepted without hardcoding an old publish
     assert.equal(url.searchParams.get('existing'), 'keep');
     assert.equal(url.searchParams.get('subId1'), 'ag_dubai_guide_dxb_other');
     assert.equal(api.resolve('airalo', '', { airalo: 'https://unrelated.invalid/' }), null);
+});
+
+test('the Dubai guide renders the owner-generated DXB transfer link with its tracking marker', () => {
+    const link = { dataset: { provider: 'kiwitaxi', placement: 'dubai_guide' } };
+    boot({ anchors: [link] });
+    const url = new URL(link.href);
+    assert.equal(url.origin + url.pathname, 'https://kiwitaxi.tpo.mx/RyxrAcPa');
+    assert.equal(url.searchParams.get('sub_id'), 'ag_dubai_guide_dxb_other');
+    assert.equal(link.dataset.affiliate, 'true');
+    assert.equal(link.rel, 'noopener sponsored');
+});
+
+test('the flight result selects the DXB link only for Dubai International arrivals', () => {
+    const link = { dataset: { provider: 'kiwitaxi', placement: 'flight_result' } };
+    const { api } = boot({ airport: 'MAD', anchors: [link] });
+    assert.equal(new URL(link.href).pathname, '/dUq07Ia1');
+    api.refresh({ airport: 'DXB' });
+    assert.equal(new URL(link.href).pathname, '/RyxrAcPa');
+    assert.equal(new URL(link.href).searchParams.get('sub_id'), 'ag_flight_result_dxb_other');
+    api.refresh({ airport: 'DWC' });
+    assert.equal(new URL(link.href).pathname, '/dUq07Ia1');
 });

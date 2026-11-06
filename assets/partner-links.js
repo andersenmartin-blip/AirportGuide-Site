@@ -14,7 +14,7 @@
     // Replace with complete publisher-generated destination links once the
     // owner's programs have approved airportguideapp.com. Empty means use the
     // existing generic link, not an invented publisher ID or deep link.
-    const dubaiLinks = Object.freeze({ airalo: '', kiwitaxi: '', viator: '' });
+    const dubaiLinks = Object.freeze({ airalo: '', kiwitaxi: 'https://kiwitaxi.tpo.mx/RyxrAcPa', viator: '' });
 
     function subId(context = {}) {
         const placement = ['dubai_guide', 'flight_result'].includes(context.placement) ? context.placement : 'site';
