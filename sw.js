@@ -1,10 +1,12 @@
-const CACHE_NAME = 'airportguide-v2';
+const CACHE_NAME = 'airportguide-v3';
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './images/icon-192.png',
-  './images/icon-512.png'
+  './tz-lookup.min.js',
+  './assets/partner-links.js',
+  './assets/guide.css',
+  './guides/dubai/'
 ];
 
 self.addEventListener('install', (event) => {
@@ -42,16 +44,21 @@ self.addEventListener('fetch', (event) => {
 
   // Always try the newest app shell first so visitors do not get a stale UI.
   if (request.mode === 'navigate') {
+    // Keep each page separate. A visit to a guide must never replace the cached
+    // flight-search page, and flight query strings need not be stored offline.
+    const cacheKey = url.pathname === '/' || url.pathname === '/index.html'
+      ? './index.html'
+      : url.pathname;
     event.respondWith(
       fetch(request)
         .then((response) => {
           if (response.ok) {
             const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', copy));
+            event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(cacheKey, copy)));
           }
           return response;
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(async () => (await caches.match(cacheKey)) || Response.error())
     );
     return;
   }
@@ -63,10 +70,10 @@ self.addEventListener('fetch', (event) => {
         const network = fetch(request).then((response) => {
           if (response.ok) {
             const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)));
           }
           return response;
-        });
+        }).catch(() => cached || Response.error());
         return cached || network;
       })
     );

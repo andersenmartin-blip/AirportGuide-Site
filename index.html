@@ -6,6 +6,7 @@
 
     <title>Live Flight Status &amp; Tracker | Check Gates &amp; Delays</title>
     <meta name="description" content="Track live flight status, gates and delays by flight number or boarding pass. Boarding passes are read privately on your device.">
+    <link rel="canonical" href="https://airportguideapp.com/">
     <meta name="keywords" content="flight status, live flight tracker, check flight delay, gate number, airport departures">
 
     <link rel="manifest" href="manifest.json">
@@ -18,6 +19,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="tz-lookup.min.js"></script>
+    <script src="/assets/partner-links.js" defer></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
         body {
@@ -108,7 +110,7 @@
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-YYW1KW4CGN"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
+  function gtag(){ if (['airportguideapp.com', 'www.airportguideapp.com'].includes(location.hostname)) dataLayer.push(arguments); }
   gtag('js', new Date());
   gtag('config', 'G-YYW1KW4CGN');
 </script>
@@ -179,11 +181,14 @@
 
         <div id="recentSearches" class="w-full mt-6 flex flex-wrap justify-center gap-2 hidden fade-in"></div>
 
-        <div class="mt-16 max-w-sm mx-auto text-center px-4 pb-8">
+        <div class="mt-10 max-w-sm mx-auto text-center px-4 pb-8">
             <h2 class="text-slate-500 font-bold text-[10px] uppercase tracking-widest mb-3">One flight. The details that matter.</h2>
             <p class="text-slate-500 text-xs leading-relaxed">
                 Search by flight number or add a boarding pass to see current times, terminals, gates, baggage belt and delay status in one clean flight card.
             </p>
+            <a href="/guides/dubai/" data-guide-link data-placement="search" class="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-indigo-300 hover:text-indigo-200">
+                <i class="fas fa-map-location-dot" aria-hidden="true"></i> Dubai arrival guide <span aria-hidden="true">→</span>
+            </a>
         </div>
 
     </div> <div id="loadingView" role="status" aria-live="polite" class="hidden flex-col items-center justify-center mt-20">
@@ -192,167 +197,87 @@
     </div>
 
     <div id="resultView" class="hidden w-full max-w-md fade-in pb-12 relative" aria-live="polite">
-        <!-- 1. The Digital Boarding Pass Card (perfectly styled for download/sharing) -->
+        <!-- Compact flight summary. Existing IDs also support sharing and download. -->
         <div class="boarding-pass" id="boardingPassCard">
-            <!-- Card Header: Status-dependent gradient background -->
-            <div class="bg-slate-900 text-white p-6 pt-12 rounded-t-[28px] flex justify-between items-center relative overflow-hidden transition-colors duration-500 shadow-inner" id="cardHeader">
-                <!-- Navigation & Action Buttons (Hidden when downloading PNG) -->
-                <button type="button" onclick="resetSearch()" id="backBtnIcon" aria-label="Search for another flight" class="absolute top-4 left-4 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-200 backdrop-blur-sm z-20">
-                    <i class="fas fa-chevron-left text-sm"></i>
+            <div class="bg-slate-900 text-white px-5 pb-4 pt-14 flex justify-between items-center relative overflow-hidden transition-colors duration-500" id="cardHeader">
+                <button type="button" onclick="resetSearch()" id="backBtnIcon" aria-label="Search for another flight" class="absolute top-3 left-4 w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full z-20">
+                    <i class="fas fa-chevron-left text-sm" aria-hidden="true"></i>
                 </button>
-                <button type="button" onclick="shareFlight()" id="shareBtnIcon" aria-label="Share flight status" class="absolute top-4 right-16 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-200 backdrop-blur-sm z-20">
-                    <i class="fas fa-share-nodes text-sm"></i>
+                <button type="button" onclick="shareFlight()" id="shareBtnIcon" aria-label="Share flight status" class="absolute top-3 right-16 w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full z-20">
+                    <i class="fas fa-share-nodes text-sm" aria-hidden="true"></i>
                 </button>
-                <button type="button" onclick="downloadPass()" id="downloadBtnIcon" aria-label="Download flight card" class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-200 backdrop-blur-sm z-20">
-                    <i class="fas fa-download text-sm"></i>
+                <button type="button" onclick="downloadPass()" id="downloadBtnIcon" aria-label="Download flight card" class="absolute top-3 right-4 w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full z-20">
+                    <i class="fas fa-download text-sm" aria-hidden="true"></i>
                 </button>
-
-                <!-- Decorative background elements -->
-                <div class="absolute -right-6 -top-6 opacity-10 text-9xl transform rotate-12"><i class="fas fa-plane"></i></div>
-                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-white/5 rounded-full blur-xl pointer-events-none"></div>
-
-                <div class="relative z-10 flex flex-col">
-                    <span class="text-[10px] text-white/60 font-bold uppercase tracking-widest">Flight Status</span>
-                    <div class="text-3xl font-extrabold tracking-tight mt-0.5" id="cardFlightNumber">---</div>
+                <div>
+                    <span class="text-[10px] text-white/70 font-bold uppercase tracking-widest">Flight status</span>
+                    <div class="text-2xl font-extrabold tracking-tight" id="cardFlightNumber">---</div>
                 </div>
-                <img id="cardAirlineLogo" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Airline logo" class="relative z-10 h-10 bg-white p-1.5 rounded-xl shadow-md object-contain border border-slate-100 max-w-[120px]" onerror="this.style.display='none'">
+                <img id="cardAirlineLogo" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Airline logo" class="h-9 bg-white p-1.5 rounded-lg object-contain max-w-[110px]" onerror="this.style.display='none'">
             </div>
 
-            <!-- Route section (Departure & Arrival codes and progress bar) -->
-            <div class="p-6 pb-5 bg-white">
-                <div class="flex justify-between items-center mb-2">
-                    <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Departure</div>
-                    <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest text-right">Arrival</div>
+            <div class="px-5 pt-4 pb-3 bg-white">
+                <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                    <span>Departure</span><span>Arrival</span>
                 </div>
-                <div class="flex justify-between items-start relative">
-                    <!-- Departure info -->
-                    <div class="w-5/12">
-                        <div class="text-5xl font-black text-slate-900 tracking-tighter" id="cardDepCode">---</div>
-                        <div class="text-xs text-slate-500 font-medium mt-0.5 truncate" id="cardDepCity">Departure</div>
+                <div class="grid grid-cols-[1fr_1fr_1fr] items-start gap-2">
+                    <div class="min-w-0">
+                        <div class="text-4xl font-black tracking-tighter" id="cardDepCode">---</div>
+                        <div class="text-xs text-slate-500 truncate" id="cardDepCity">Departure</div>
                     </div>
-
-                    <!-- Progress Timeline -->
-                    <div class="w-7/12 flex flex-col items-center justify-center px-3 relative">
-                        <span class="text-[9px] font-extrabold text-indigo-500 uppercase tracking-widest mb-1" id="flightDuration">Direct</span>
-                        <div class="w-full relative h-1.5 flex items-center">
-                            <!-- Background line -->
+                    <div class="flex flex-col items-center pt-2 px-1">
+                        <span class="text-[9px] font-bold text-indigo-600 mb-2 whitespace-nowrap" id="flightDuration">Direct</span>
+                        <div class="w-full relative h-1.5">
                             <div class="absolute inset-x-0 bg-slate-100 rounded-full h-1"></div>
-                            <!-- Live Progress bar -->
-                            <div class="absolute left-0 top-0.5 bg-indigo-500 rounded-full h-1 transition-all duration-1000" id="routeProgressBar"></div>
-                            <!-- Plane Icon -->
-                            <div class="absolute text-indigo-500 transition-all duration-1000 transform -translate-y-[2px]" id="routePlaneIcon">
-                                <i class="fas fa-plane text-xs rotate-90 drop-shadow-md"></i>
-                            </div>
+                            <div class="absolute left-0 top-0 bg-indigo-500 rounded-full h-1 transition-all duration-1000" id="routeProgressBar"></div>
+                            <div class="absolute top-[-5px] text-indigo-500 transition-all duration-1000" id="routePlaneIcon"><i class="fas fa-plane text-xs" aria-hidden="true"></i></div>
                         </div>
-                        <span class="text-[8px] font-bold text-slate-400 mt-1 uppercase tracking-wider" id="routeStatusLabel">Checking Status</span>
+                        <span class="text-[8px] font-bold text-slate-500 mt-2 uppercase whitespace-nowrap" id="routeStatusLabel">Checking status</span>
                     </div>
-
-                    <!-- Arrival info -->
-                    <div class="w-5/12 text-right">
-                        <div class="text-5xl font-black text-slate-900 tracking-tighter flex items-center justify-end gap-1">
-                            <span id="cardArrCode">---</span>
+                    <div class="min-w-0 text-right">
+                        <div class="text-4xl font-black tracking-tighter" id="cardArrCode">---</div>
+                        <div class="text-xs text-slate-500 truncate" id="cardArrCity">Arrival</div>
+                        <div id="weatherContainer" class="inline-flex items-center gap-1 bg-sky-50 text-sky-700 rounded-full px-2 py-0.5 text-[10px] font-bold mt-1 hidden">
+                            <i id="weatherIcon" class="fas fa-sun" aria-hidden="true"></i><span id="weatherTemp">--°C</span>
                         </div>
-                        <div class="text-xs text-slate-500 font-medium mt-0.5 truncate" id="cardArrCity">Arrival</div>
-                        <!-- Weather Capsule Badge -->
-                        <div id="weatherContainer" class="inline-flex items-center gap-1.5 bg-sky-50 text-sky-600 border border-sky-100 rounded-full py-0.5 px-2 text-[10px] font-bold mt-1.5 hidden shadow-sm">
-                            <i id="weatherIcon" class="fas fa-sun"></i> <span id="weatherTemp">--°C</span>
+                    </div>
+                </div>
+                <div class="flex justify-center mt-3"><div id="cardStatusBadge"></div></div>
+            </div>
+
+            <div class="px-5 py-3 bg-slate-50 border-t border-slate-100">
+                <div class="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <div class="text-[10px] text-slate-500 font-bold uppercase tracking-wide">Departure time</div>
+                        <div class="text-2xl font-extrabold" id="cardDepTime">--:--</div>
+                        <div class="text-[11px] text-slate-500" id="cardDepDate">Date unavailable</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[10px] text-slate-500 font-bold uppercase tracking-wide">Arrival time</div>
+                        <div class="text-2xl font-extrabold" id="cardArrTime">--:--</div>
+                        <div class="text-[11px] text-slate-500" id="cardArrDate">Date unavailable</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 border-t border-slate-200 pt-3" id="gateBox">
+                    <div>
+                        <div class="text-[9px] font-bold uppercase tracking-wide text-indigo-600 mb-1">Departure</div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><div class="text-[10px] text-slate-500">Terminal</div><div class="text-base font-extrabold" id="cardDepTerminal">—</div></div>
+                            <div><div class="text-[10px] text-slate-500">Gate</div><div class="text-base font-extrabold" id="cardDepGate">TBA</div></div>
+                        </div>
+                    </div>
+                    <div class="border-l border-slate-200 pl-4">
+                        <div class="text-[9px] font-bold uppercase tracking-wide text-emerald-700 mb-1">Arrival</div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><div class="text-[10px] text-slate-500">Gate</div><div class="text-base font-extrabold" id="cardArrGate">—</div></div>
+                            <div><div class="text-[10px] text-slate-500">Belt</div><div class="text-base font-extrabold" id="cardBaggageBelt">—</div></div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Authentic Boarding Pass Divider -->
-            <div class="pass-divider"></div>
-
-            <!-- Timing and Gate Grid Details -->
-            <div class="p-6 bg-slate-50/70 border-b border-slate-100">
-                <!-- Status Badge -->
-                <div class="mb-6 flex justify-center">
-                    <div id="cardStatusBadge" class="px-5 py-2.5 rounded-full font-extrabold text-xs uppercase tracking-widest shadow-md flex items-center gap-2"></div>
-                </div>
-
-                <!-- Timing Details -->
-                <div class="grid grid-cols-2 gap-6 mb-6">
-                    <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm">
-                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Departure Time</div>
-                        <div class="text-xl font-extrabold text-slate-800" id="cardDepTime">--:--</div>
-                        <div class="text-[10px] text-slate-500 font-medium mt-0.5" id="cardDepDate">Scheduled</div>
-                    </div>
-                    <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm text-right">
-                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Expected Arr.</div>
-                        <div class="text-xl font-extrabold text-slate-800" id="cardArrTime">--:--</div>
-                        <div class="text-[10px] text-slate-500 font-medium mt-0.5" id="cardArrDate">Local Time</div>
-                    </div>
-                </div>
-
-                <!-- Gate, Terminal and Baggage Details Card -->
-                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm" id="gateBox">
-                    <div class="grid grid-cols-2 gap-4">
-                        <!-- Departure Info -->
-                        <div class="border-r border-slate-100 pr-2">
-                            <div class="text-[9px] text-indigo-500 font-extrabold uppercase tracking-widest mb-2 flex items-center gap-1">
-                                <i class="fas fa-plane-departure text-[10px]"></i> Departure
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <div class="text-[9px] text-slate-400 font-bold uppercase">Terminal</div>
-                                    <div class="text-lg font-extrabold text-slate-800" id="cardDepTerminal">-</div>
-                                </div>
-                                <div>
-                                    <div class="text-[9px] text-slate-400 font-bold uppercase">Gate</div>
-                                    <div class="text-lg font-extrabold text-slate-800" id="cardDepGate">TBA</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Arrival Info -->
-                        <div class="pl-2">
-                            <div class="text-[9px] text-emerald-500 font-extrabold uppercase tracking-widest mb-2 flex items-center gap-1">
-                                <i class="fas fa-plane-arrival text-[10px]"></i> Arrival
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <div class="text-[9px] text-slate-400 font-bold uppercase">Gate</div>
-                                    <div class="text-lg font-extrabold text-slate-800" id="cardArrGate">-</div>
-                                </div>
-                                <div>
-                                    <div class="text-[9px] text-slate-400 font-bold uppercase">Belt</div>
-                                    <div class="text-lg font-extrabold text-slate-800" id="cardBaggageBelt">-</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Skeuomorphic Barcode for Authentic Look & Shareability -->
-                <div class="flex flex-col items-center justify-center mt-6 pt-5 border-t border-slate-200/60">
-                    <div class="h-10 w-60 bg-white flex items-center justify-between px-1 border border-slate-100/50 rounded shadow-sm opacity-90 overflow-hidden" id="barcodeContainer">
-                        <!-- Repeating custom vertical layout to resemble a real boarding pass barcode -->
-                        <div class="w-1.5 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-0.5 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-2.5 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-1.5 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-0.5 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-2 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-1 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-3 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-0.5 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-2 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-1.5 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-0.5 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-1 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-3 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-1 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-2.5 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-0.5 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-2 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-1.5 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-1 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-0.5 h-8 bg-slate-900 shrink-0"></div>
-                        <div class="w-3 h-8 bg-slate-900 shrink-0"></div>
-                    </div>
-                    <span class="text-[9px] font-mono tracking-[0.25em] text-slate-400 mt-1 uppercase" id="barcodeFlightNumber">GATES-LIVE</span>
-                </div>
+            <div class="px-5 py-2.5 flex flex-wrap justify-between gap-x-3 gap-y-1 text-[10px] text-slate-500 border-t border-slate-100">
+                <span>Dates &amp; times are local to each airport</span>
+                <span id="cardUpdatedAt">Data not yet retrieved</span>
             </div>
         </div>
 
@@ -380,7 +305,7 @@
         </section>
 
         <!-- 2. Contextual travel offers -->
-        <div id="travelToolkit" class="mt-8 space-y-5">
+        <div id="travelToolkit" class="mt-5 space-y-4">
             <div class="flex items-center justify-center gap-2">
                 <div class="h-px bg-slate-800 flex-grow"></div>
                 <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest text-center flex items-center gap-1.5">
@@ -392,7 +317,7 @@
             <div class="flex flex-col gap-4" id="toolkitContainer">
 
                 <!-- AirHelp: Flight Delay Compensation Card -->
-                <div id="cardAirhelp" class="hidden bg-gradient-to-br from-rose-950/40 to-red-900/20 border border-red-500/30 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-red-500/50 hover:scale-[1.01]">
+                <div id="cardAirhelp" data-offer-card class="hidden bg-gradient-to-br from-rose-950/40 to-red-900/20 border border-red-500/30 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-red-500/50 hover:scale-[1.01]">
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 rounded-xl bg-red-600 text-white flex items-center justify-center text-xl shrink-0 shadow-lg shadow-red-600/20">
                             <i class="fas fa-gavel"></i>
@@ -405,7 +330,7 @@
                             <p class="text-xs text-red-300/90 mt-2 leading-relaxed">
                                 Was your flight delayed over 3 hours or cancelled? Under EU passenger-rights rules, you may be eligible for up to <strong>€600</strong> in compensation.
                             </p>
-                            <a href="https://www.airhelp.com/en/?utm_medium=affiliate&amp;utm_source=pap&amp;utm_campaign=aff-69d37834e54fa&amp;a_aid=69d37834e54fa&amp;a_bid=b16056f0" target="_blank" rel="noopener sponsored" onclick="gtag('event', 'click_airhelp', {'event_category': 'affiliate'});" class="mt-4 w-full bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-red-600/20 transition-all duration-200">
+                            <a href="https://www.airhelp.com/en/?utm_medium=affiliate&amp;utm_source=pap&amp;utm_campaign=aff-69d37834e54fa&amp;a_aid=69d37834e54fa&amp;a_bid=b16056f0" target="_blank" rel="noopener sponsored" data-provider="airhelp" data-placement="flight_result" class="mt-4 w-full bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-red-600/20 transition-all duration-200">
                                 Check Eligibility Free <i class="fas fa-arrow-right text-[10px]"></i>
                             </a>
                         </div>
@@ -413,7 +338,7 @@
                 </div>
 
                 <!-- Airalo: eSIM Card -->
-                <div id="cardEsim" class="hidden bg-gradient-to-br from-indigo-950/40 to-blue-900/20 border border-indigo-500/30 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-indigo-500/50 hover:scale-[1.01]">
+                <div id="cardEsim" data-offer-card class="hidden bg-gradient-to-br from-indigo-950/40 to-blue-900/20 border border-indigo-500/30 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-indigo-500/50 hover:scale-[1.01]">
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 rounded-xl bg-indigo-500 text-white flex items-center justify-center text-xl shrink-0 shadow-lg shadow-indigo-500/20">
                             <i class="fas fa-wifi"></i>
@@ -424,14 +349,20 @@
                                 <span class="bg-indigo-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Travel eSIM</span>
                             </div>
                             <p class="text-xs text-indigo-300/90 mt-2 leading-relaxed">
-                                Avoid expensive roaming fees and long queues for physical SIMs. Install an eSIM and stay connected with high-speed internet the second you touch down.
+                                Need data in <span id="esimDestination">your destination</span>? Check your roaming allowance, then compare travel eSIMs. Choose your destination and check phone compatibility before buying.
                             </p>
-                            <a href="https://airalo.pxf.io/2RKYkg" target="_blank" rel="noopener sponsored" onclick="gtag('event', 'click_esim', {'event_category': 'affiliate'});" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 transition-all duration-200">
-                                Buy eSIM Data <i class="fas fa-arrow-right text-[10px]"></i>
+                            <a href="https://airalo.pxf.io/2RKYkg" target="_blank" rel="noopener sponsored" data-provider="airalo" data-placement="flight_result" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 transition-all duration-200">
+                                Compare eSIM plans <i class="fas fa-arrow-right text-[10px]"></i>
                             </a>
                         </div>
                     </div>
                 </div>
+
+                <a id="arrivalGuide" href="/guides/dubai/" data-guide-link data-placement="flight_result" class="hidden flex items-center gap-3 rounded-2xl border border-slate-700 bg-slate-800/50 p-4 hover:border-indigo-400/60">
+                    <i class="fas fa-map-location-dot text-xl text-indigo-300" aria-hidden="true"></i>
+                    <span class="flex-1"><span class="block text-sm font-bold text-white">Arriving in Dubai?</span><span class="block mt-1 text-xs text-slate-400">Metro, taxi, mobile data and your first steps at DXB.</span></span>
+                    <span class="text-indigo-300" aria-hidden="true">→</span>
+                </a>
 
                 <details id="secondaryTools" class="hidden group rounded-2xl border border-slate-700/70 bg-slate-900/50 overflow-hidden">
                     <summary class="cursor-pointer list-none flex items-center justify-between px-5 py-4 text-sm font-semibold text-slate-300 hover:text-white transition-colors">
@@ -440,7 +371,7 @@
                     </summary>
                     <div class="px-3 pb-3 flex flex-col gap-3">
                 <!-- Kiwitaxi: Airport Taxi Transfer Card -->
-                <div id="cardTaxi" class="hidden bg-gradient-to-br from-amber-950/40 to-yellow-950/10 border border-amber-500/20 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-amber-500/45">
+                <div id="cardTaxi" data-offer-card class="hidden bg-gradient-to-br from-amber-950/40 to-yellow-950/10 border border-amber-500/20 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-amber-500/45">
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-xl shrink-0 shadow-lg shadow-amber-500/20">
                             <i class="fas fa-taxi"></i>
@@ -453,7 +384,7 @@
                             <p class="text-xs text-amber-300/90 mt-2 leading-relaxed">
                                 Skip the airport taxi queues. Pre-book a private transfer. Your professional driver will track your flight, wait for you in the arrival hall with a nameplate, and carry your bags.
                             </p>
-                            <a href="https://kiwitaxi.tpo.mx/dUq07Ia1" target="_blank" rel="noopener sponsored" onclick="gtag('event', 'click_taxi', {'event_category': 'affiliate'});" class="mt-4 w-full bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition-all duration-200">
+                            <a href="https://kiwitaxi.tpo.mx/dUq07Ia1" target="_blank" rel="noopener sponsored" data-provider="kiwitaxi" data-placement="flight_result" class="mt-4 w-full bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition-all duration-200">
                                 Pre-Book Taxi <i class="fas fa-arrow-right text-[10px]"></i>
                             </a>
                         </div>
@@ -461,7 +392,7 @@
                 </div>
 
                 <!-- Tours & Tickets Card -->
-                <div id="cardTours" class="hidden bg-gradient-to-br from-purple-950/40 to-fuchsia-900/20 border border-purple-500/30 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-purple-500/50">
+                <div id="cardTours" data-offer-card class="hidden bg-gradient-to-br from-purple-950/40 to-fuchsia-900/20 border border-purple-500/30 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-purple-500/50">
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 rounded-xl bg-purple-500 text-white flex items-center justify-center text-xl shrink-0 shadow-lg shadow-purple-500/20">
                             <i class="fas fa-ticket-alt"></i>
@@ -469,12 +400,12 @@
                         <div class="flex-grow">
                             <div class="flex items-center justify-between flex-wrap gap-2">
                                 <h4 class="text-sm font-bold text-purple-200 uppercase tracking-wide" id="toursTitle">Local Tours &amp; Tickets</h4>
-                                <span class="bg-purple-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Free Cancel</span>
+                                <span class="bg-purple-500/20 text-purple-200 text-[9px] font-bold px-2.5 py-1 rounded-full">Explore</span>
                             </div>
                             <p class="text-xs text-purple-300/90 mt-2 leading-relaxed">
-                                Get skip-the-line tickets, guided walking tours, and activities in <span id="toursCityText" class="font-semibold text-purple-200">your destination</span>. Secure your tickets with flexible cancellation.
+                                Browse tickets, walking tours and activities in <span id="toursCityText" class="font-semibold text-purple-200">your destination</span>. Check each activity’s booking and cancellation terms.
                             </p>
-                            <a href="#" id="linkTours" target="_blank" rel="noopener sponsored" onclick="gtag('event', 'click_tours', {'event_category': 'affiliate'});" class="mt-4 w-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-purple-600/20 transition-all duration-200">
+                            <a href="#" id="linkTours" target="_blank" rel="noopener sponsored" data-provider="viator" data-placement="flight_result" class="mt-4 w-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-purple-600/20 transition-all duration-200">
                                 Explore Activities <i class="fas fa-arrow-right text-[10px]"></i>
                             </a>
                         </div>
@@ -918,7 +849,7 @@
             hideBoardingPassStatus();
             history.replaceState({}, '', location.pathname);
 
-            const cards = ['cardAirhelp', 'cardEsim', 'cardTaxi', 'cardTours', 'secondaryTools'];
+            const cards = ['cardAirhelp', 'cardEsim', 'cardTaxi', 'cardTours', 'secondaryTools', 'arrivalGuide'];
             cards.forEach(cardId => {
                 const card = document.getElementById(cardId);
                 if (card) card.classList.add('hidden');
@@ -976,6 +907,8 @@
                 loadingView.classList.add('hidden');
                 loadingView.classList.remove('flex');
                 resultView.classList.remove('hidden');
+                window.AirportGuidePartners?.refresh({ airport: data.arr_iata || '', placement: 'flight_result' });
+                if (typeof gtag === 'function') gtag('event', 'flight_search_success', { arrival_airport: data.arr_iata || '' });
                 updateRecentSearches(flightNumber);
                 const url = new URL(location.href);
                 url.searchParams.set('flight', flightNumber);
@@ -999,7 +932,7 @@
 
         function populateCard(f) {
             document.getElementById('cardFlightNumber').textContent = f.flight_number;
-            document.getElementById('barcodeFlightNumber').textContent = f.flight_number + '-PASS';
+            document.body.dataset.arrivalAirport = f.arr_iata || '';
 
             const logoEl = document.getElementById('cardAirlineLogo');
             if (f.airline_iata && f.airline_iata !== "N/A") {
@@ -1035,6 +968,17 @@
 
             document.getElementById('cardDepTime').textContent = formatTime(f.departure_time);
             document.getElementById('cardArrTime').textContent = formatTime(f.arrival_time);
+            const formatDate = (value) => {
+                const match = String(value || '').match(/^(\d{4}-\d{2}-\d{2})[ T]/);
+                if (!match) return 'Date unavailable';
+                const date = new Date(match[1] + 'T12:00:00Z');
+                return isNaN(date) ? 'Date unavailable' : new Intl.DateTimeFormat('en-GB', {
+                    day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC'
+                }).format(date);
+            };
+            document.getElementById('cardDepDate').textContent = formatDate(f.departure_time);
+            document.getElementById('cardArrDate').textContent = formatDate(f.arrival_time);
+            document.getElementById('cardUpdatedAt').textContent = `Retrieved ${new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date())} · your time`;
 
             document.getElementById('cardDepTerminal').textContent = f.terminal !== "N/A" ? f.terminal : '-';
             document.getElementById('cardDepGate').textContent = f.gate !== "N/A" ? f.gate : 'TBA';
@@ -1112,15 +1056,15 @@
             }
 
             const badge = document.getElementById('cardStatusBadge');
-            badge.className = `px-5 py-2.5 rounded-full font-extrabold text-xs uppercase tracking-widest shadow-md flex items-center gap-2 ${sBg} ${sText}`;
+            badge.className = `px-3 py-1.5 rounded-full font-bold text-[10px] uppercase tracking-wide flex items-center gap-2 ${sBg} ${sText}`;
 
             if (sLabel === 'In Air') {
                 badge.innerHTML = `<i class="fas ${sIcon} animate-bounce"></i> ${sLabel} <span class="pulse-live-dot bg-indigo-700"></span>`;
             } else {
-                badge.innerHTML = `<i class="fas ${sIcon}"></i> ${sLabel} <i class="fas fa-check text-[10px] opacity-70 ml-1" title="Verified API"></i>`;
+                badge.innerHTML = `<i class="fas ${sIcon}"></i> ${sLabel}`;
             }
 
-            document.getElementById('cardHeader').className = `bg-gradient-to-r ${headerGradient} text-white p-6 pt-12 rounded-t-[28px] flex justify-between items-center relative overflow-hidden transition-colors duration-500 shadow-inner`;
+            document.getElementById('cardHeader').className = `bg-gradient-to-r ${headerGradient} text-white px-5 pb-4 pt-14 flex justify-between items-center relative overflow-hidden transition-colors duration-500`;
 
             const cardAirhelp = document.getElementById('cardAirhelp');
             const cardEsim = document.getElementById('cardEsim');
@@ -1131,14 +1075,18 @@
                 if(card) card.classList.add('hidden');
             });
 
+            const arrivalGuide = document.getElementById('arrivalGuide');
+            arrivalGuide.classList.toggle('hidden', f.arr_iata !== 'DXB');
             const esimLocName = arrCountryName || arrCityName;
-            document.getElementById('esimTitle').textContent = `eSIM Mobile Data · ${esimLocName}`;
+            document.getElementById('esimTitle').textContent = `Mobile data · ${esimLocName}`;
+            document.getElementById('esimDestination').textContent = esimLocName;
             document.getElementById('taxiTitle').textContent = `Airport Taxi · ${arrCityName}`;
             document.getElementById('toursTitle').textContent = `Tours & Experiences · ${arrCityName}`;
             document.getElementById('toursCityText').textContent = arrCityName;
 
             const toursLink = document.getElementById('linkTours');
             if (toursLink) {
+                toursLink.dataset.destination = arrCityName;
                 toursLink.href = `https://www.viator.com/searchResults/all?text=${encodeURIComponent(arrCityName)}`;
             }
 
