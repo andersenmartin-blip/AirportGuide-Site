@@ -155,3 +155,19 @@ test('the flight result selects the DXB link only for Dubai International arriva
     api.refresh({ airport: 'DWC' });
     assert.equal(new URL(link.href).pathname, '/dUq07Ia1');
 });
+
+test('the UAE Airalo partner link renders for Dubai with attribution and resets for other countries', () => {
+    const link = { dataset: { provider: 'airalo', placement: 'dubai_guide' } };
+    const { api } = boot({ anchors: [link] });
+    let url = new URL(link.href);
+    assert.equal(url.origin + url.pathname, 'https://airalo.pxf.io/KB66v9');
+    assert.equal(url.searchParams.get('subId1'), 'ag_dubai_guide_dxb_other');
+    assert.equal(link.dataset.affiliate, 'true');
+    api.refresh({ airport: 'JFK' });
+    assert.equal(new URL(link.href).pathname, '/2RKYkg');
+    link.dataset.placement = 'flight_result';
+    api.refresh({ airport: 'DXB' });
+    url = new URL(link.href);
+    assert.equal(url.pathname, '/KB66v9');
+    assert.equal(url.searchParams.get('subId1'), 'ag_flight_result_dxb_other');
+});
