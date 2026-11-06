@@ -638,6 +638,14 @@
             return /^[A-Z0-9]{3,8}$/.test(candidate) && /\d/.test(candidate) ? candidate : null;
         }
 
+        function normalizeFlightQuery(value) {
+            const query = String(value || '').trim().toUpperCase().replace(/\s+/g, '');
+            // Keep carrier digits (U2, 3U, etc.) and flight suffixes intact.
+            // Airports may pad the numeric part: EK032 and EK32 are one lookup.
+            const parts = query.match(/^([A-Z]{2,3}|[A-Z]\d|\d[A-Z])(\d+[A-Z]?)$/);
+            return parts ? normalizeFlightNumber(parts[1], parts[2]) || query : query;
+        }
+
         function extractFlightNumber(text, allowGeneric = false) {
             const raw = String(text || '').replace(/[\u0000-\u001f]+/g, ' ').trim();
             if (!raw) return null;
@@ -860,7 +868,7 @@
 
         searchForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const query = flightInput.value.trim().toUpperCase().replace(/\s+/g, '');
+            const query = normalizeFlightQuery(flightInput.value);
             if (typeof gtag === 'function') gtag('event', 'search', { 'search_term': query });
             if (!/^[A-Z0-9]{3,8}$/.test(query) || !/\d/.test(query)) {
                 return showError("Enter a valid flight number, for example SK943.");
@@ -875,6 +883,10 @@
         }
 
         async function searchFlight(flightNumber) {
+            // All entry points, including recent searches and boarding passes,
+            // use the same number before contacting the flight service.
+            flightNumber = normalizeFlightQuery(flightNumber);
+            flightInput.value = flightNumber;
             searchView.classList.add('hidden');
             errorMsg.classList.add('hidden');
             flightInput.setAttribute('aria-invalid', 'false');
@@ -1181,7 +1193,7 @@
 
         const initialFlight = new URLSearchParams(location.search).get('flight');
         if (initialFlight) {
-            const normalized = initialFlight.trim().toUpperCase().replace(/\s+/g, '');
+            const normalized = normalizeFlightQuery(initialFlight);
             if (/^[A-Z0-9]{3,8}$/.test(normalized) && /\d/.test(normalized)) {
                 flightInput.value = normalized;
                 searchFlight(normalized);
