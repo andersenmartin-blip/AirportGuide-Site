@@ -112,19 +112,19 @@
 </head>
 <body class="flex flex-col items-center px-4 overflow-x-hidden min-h-[100svh] safe-bottom selection:bg-indigo-500/30">
 
-    <main class="w-full flex flex-col items-center">
+    <main class="w-full flex-1 flex flex-col items-center">
 
     <div id="searchView" class="w-full max-w-md flex flex-col items-center fade-in mt-8 sm:mt-20">
         <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-300 mb-8">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,.8)]"></span>
-            Airport Guide · Live data
+            <span id="searchBadgeText">Airport Guide · Live data</span>
         </div>
         <div class="w-20 h-20 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-3xl flex items-center justify-center text-white text-4xl mb-8 shadow-lg shadow-indigo-500/40 transform -rotate-6">
             <i class="fas fa-plane"></i>
         </div>
 
-        <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-3 text-center">Find your flight</h1>
-        <p class="text-slate-400 text-center mb-9 max-w-sm">Live gate, terminal, delay and arrival details — without creating an account.</p>
+        <h1 id="searchTitle" class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-3 text-center">Find your flight</h1>
+        <p id="searchSubtitle" class="text-slate-400 text-center mb-9 max-w-sm">Live gate, terminal, delay and arrival details — without creating an account.</p>
 
         <form id="searchForm" class="w-full relative">
             <label for="flightInput" class="sr-only">Flight number</label>
@@ -133,7 +133,7 @@
                 <input
                     type="text"
                     id="flightInput"
-                    placeholder="E.g. AA733 or SK943"
+                    placeholder="E.g. EK002, BA107 or SK943"
                     class="w-full bg-slate-800/50 border border-slate-700 text-white text-xl sm:text-2xl px-14 py-5 rounded-2xl focus:border-indigo-500 focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/20 transition-all font-semibold uppercase placeholder:normal-case placeholder:font-normal placeholder:text-slate-500"
                     autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text"
                     aria-describedby="flightHint errorMsg" aria-invalid="false" required
@@ -145,6 +145,12 @@
             <div id="flightHint" class="flex items-center justify-center gap-4 mt-4 text-[11px] text-slate-500">
                 <span><i class="fas fa-bolt text-amber-400/80 mr-1"></i> Live status</span>
                 <span><i class="fas fa-lock text-emerald-400/80 mr-1"></i> No sign-up</span>
+            </div>
+            <div id="liveExamples" class="mt-3.5 flex flex-wrap items-center justify-center gap-1.5" aria-label="Live flight examples">
+                <span class="text-[11px] text-slate-500 mr-0.5">Try live DXB:</span>
+                <button type="button" data-example-flight="EK002" class="px-2.5 py-1 rounded-full bg-slate-800/70 border border-slate-700/80 text-xs text-slate-300 hover:border-indigo-400 hover:text-white transition-colors font-semibold">EK002 <span class="font-normal text-slate-500 text-[10px]">LHR→DXB</span></button>
+                <button type="button" data-example-flight="BA107" class="px-2.5 py-1 rounded-full bg-slate-800/70 border border-slate-700/80 text-xs text-slate-300 hover:border-indigo-400 hover:text-white transition-colors font-semibold">BA107 <span class="font-normal text-slate-500 text-[10px]">LHR→DXB</span></button>
+                <button type="button" data-example-flight="EK032" class="px-2.5 py-1 rounded-full bg-slate-800/70 border border-slate-700/80 text-xs text-slate-300 hover:border-indigo-400 hover:text-white transition-colors font-semibold">EK032 <span class="font-normal text-slate-500 text-[10px]">LHR→DXB</span></button>
             </div>
             <div class="flex items-center gap-3 my-5" aria-hidden="true">
                 <div class="h-px flex-1 bg-slate-700/70"></div>
@@ -158,7 +164,7 @@
                 </span>
                 <span class="min-w-0 flex-1">
                     <span class="block text-sm font-bold text-slate-200">Upload boarding pass</span>
-                    <span class="mt-0.5 block text-[11px] leading-relaxed text-slate-500">Photo or PDF · read privately on this device</span>
+                    <span class="mt-0.5 block text-[11px] leading-relaxed text-slate-400">Photo or PDF · <strong class="font-semibold text-emerald-400/90">Processed 100% locally in your browser</strong> — never uploaded to any server</span>
                 </span>
                 <i class="fas fa-chevron-right text-xs text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-300"></i>
             </label>
@@ -168,14 +174,27 @@
 
         <div id="recentSearches" class="w-full mt-6 flex flex-wrap justify-center gap-2 hidden fade-in"></div>
 
-        <div class="mt-10 max-w-sm mx-auto text-center px-4 pb-8">
-            <h2 class="text-slate-500 font-bold text-[10px] uppercase tracking-widest mb-3">One flight. The details that matter.</h2>
-            <p class="text-slate-500 text-xs leading-relaxed">
-                Search by flight number or add a boarding pass to see current times, terminals, gates, baggage belt and delay status in one clean flight card.
-            </p>
-            <a href="/guides/dubai/" data-guide-link data-placement="search" class="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-indigo-300 hover:text-indigo-200">
-                <i class="fas fa-map-location-dot" aria-hidden="true"></i> Dubai arrival guide <span aria-hidden="true">→</span>
+        <div class="mt-8 w-full">
+            <a id="frontDubaiGuide" href="/guides/dubai/" data-guide-link data-placement="search" class="flex w-full items-center gap-3.5 rounded-2xl border border-indigo-500/25 bg-indigo-950/25 px-4 py-3.5 text-left transition-all hover:border-indigo-400/50 hover:bg-indigo-950/45 group">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-lg text-indigo-300">
+                    <i class="fas fa-map-location-dot" aria-hidden="true"></i>
+                </span>
+                <span class="min-w-0 flex-1">
+                    <span class="flex items-center gap-2">
+                        <span class="text-sm font-bold text-slate-100">Flying to Dubai (DXB)?</span>
+                        <span class="rounded-full bg-indigo-500/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-indigo-300">Arrival Guide</span>
+                    </span>
+                    <span class="mt-0.5 block text-xs text-slate-400">Terminals 1–3, Metro vs. fixed-price taxi &amp; UAE eSIM plans</span>
+                </span>
+                <span class="text-indigo-300 font-bold transition-transform group-hover:translate-x-0.5" aria-hidden="true">→</span>
             </a>
+        </div>
+
+        <div class="mt-8 max-w-sm mx-auto text-center px-4 pb-6">
+            <h2 class="text-slate-500 font-bold text-[10px] uppercase tracking-widest mb-2.5">One flight. The details that matter.</h2>
+            <p class="text-slate-500 text-xs leading-relaxed">
+                Search by flight number or scan a boarding pass locally in your browser to see live times, terminals, gates, baggage belt and delay status.
+            </p>
         </div>
 
     </div> <div id="loadingView" role="status" aria-live="polite" class="hidden flex-col items-center justify-center mt-20">
@@ -276,7 +295,7 @@
                 </div>
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2">
-                        <span class="text-[9px] font-black uppercase tracking-widest text-emerald-400">On this device</span>
+                        <span class="text-[9px] font-black uppercase tracking-widest text-emerald-400">100% local in browser · never uploaded</span>
                         <i class="fas fa-lock text-[9px] text-emerald-400/80"></i>
                     </div>
                     <h3 class="mt-1 text-sm font-bold text-slate-100">Your boarding pass</h3>
@@ -303,7 +322,7 @@
 
             <div class="flex flex-col gap-4" id="toolkitContainer">
 
-                <!-- AirHelp: Flight Delay Compensation Card -->
+                <!-- AirHelp: Flight Delay Compensation Card (prioritized #1 only on 3h+ delay or cancellation) -->
                 <div id="cardAirhelp" data-offer-card class="hidden bg-gradient-to-br from-rose-950/40 to-red-900/20 border border-red-500/30 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-red-500/50 hover:scale-[1.01]">
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 rounded-xl bg-red-600 text-white flex items-center justify-center text-xl shrink-0 shadow-lg shadow-red-600/20">
@@ -333,13 +352,34 @@
                         <div class="flex-grow">
                             <div class="flex items-center justify-between flex-wrap gap-2">
                                 <h4 class="text-sm font-bold text-indigo-200 uppercase tracking-wide" id="esimTitle">eSIM Mobile Data</h4>
-                                <span class="bg-indigo-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Travel eSIM</span>
+                                <span id="esimBadge" class="bg-indigo-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Travel eSIM</span>
                             </div>
-                            <p class="text-xs text-indigo-300/90 mt-2 leading-relaxed">
+                            <p id="esimDesc" class="text-xs text-indigo-300/90 mt-2 leading-relaxed">
                                 Need data in <span id="esimDestination">your destination</span>? Check your roaming allowance, then compare travel eSIMs. Choose your destination and check phone compatibility before buying.
                             </p>
-                            <a href="https://airalo.pxf.io/2RKYkg" target="_blank" rel="noopener sponsored" data-provider="airalo" data-placement="flight_result" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 transition-all duration-200">
-                                Compare eSIM plans <i class="fas fa-arrow-right text-[10px]"></i>
+                            <a id="linkEsim" href="https://airalo.pxf.io/2RKYkg" target="_blank" rel="noopener sponsored" data-provider="airalo" data-placement="flight_result" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 transition-all duration-200">
+                                <span id="esimCtaText">Compare eSIM plans</span> <span aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kiwitaxi: Airport Taxi Transfer Card -->
+                <div id="cardTaxi" data-offer-card class="hidden bg-gradient-to-br from-amber-950/40 to-yellow-950/10 border border-amber-500/20 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-amber-500/45 hover:scale-[1.01]">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-xl shrink-0 shadow-lg shadow-amber-500/20">
+                            <i class="fas fa-taxi"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <h4 class="text-sm font-bold text-amber-200 uppercase tracking-wide" id="taxiTitle">Airport Taxi Transfer</h4>
+                                <span id="taxiBadge" class="bg-amber-500 text-slate-950 text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Private transfer</span>
+                            </div>
+                            <p id="taxiDesc" class="text-xs text-amber-300/90 mt-2 leading-relaxed">
+                                Compare a private airport transfer for your group and luggage. Check the full quote, meeting point, waiting time and cancellation terms before booking.
+                            </p>
+                            <a id="linkTaxi" href="https://kiwitaxi.tpo.mx/dUq07Ia1" target="_blank" rel="noopener sponsored" data-provider="kiwitaxi" data-placement="flight_result" class="mt-4 w-full bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition-all duration-200">
+                                <span id="taxiCtaText">Pre-Book Taxi</span> <span aria-hidden="true">→</span>
                             </a>
                         </div>
                     </div>
@@ -347,7 +387,7 @@
 
                 <a id="arrivalGuide" href="/guides/dubai/" data-guide-link data-placement="flight_result" class="hidden flex items-center gap-3 rounded-2xl border border-slate-700 bg-slate-800/50 p-4 hover:border-indigo-400/60">
                     <i class="fas fa-map-location-dot text-xl text-indigo-300" aria-hidden="true"></i>
-                    <span class="flex-1"><span class="block text-sm font-bold text-white">Arriving in Dubai?</span><span class="block mt-1 text-xs text-slate-400">Metro, taxi, mobile data and your first steps at DXB.</span></span>
+                    <span class="flex-1"><span class="block text-sm font-bold text-white">Arriving in Dubai (DXB)?</span><span class="block mt-1 text-xs text-slate-400">Terminals 1–3, Metro vs. taxi &amp; first steps at DXB.</span></span>
                     <span class="text-indigo-300" aria-hidden="true">→</span>
                 </a>
 
@@ -357,47 +397,26 @@
                         <i class="fas fa-chevron-down text-xs text-slate-500 transition-transform group-open:rotate-180"></i>
                     </summary>
                     <div class="px-3 pb-3 flex flex-col gap-3">
-                <!-- Kiwitaxi: Airport Taxi Transfer Card -->
-                <div id="cardTaxi" data-offer-card class="hidden bg-gradient-to-br from-amber-950/40 to-yellow-950/10 border border-amber-500/20 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-amber-500/45">
-                    <div class="flex items-start gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-xl shrink-0 shadow-lg shadow-amber-500/20">
-                            <i class="fas fa-taxi"></i>
-                        </div>
-                        <div class="flex-grow">
-                            <div class="flex items-center justify-between flex-wrap gap-2">
-                                <h4 class="text-sm font-bold text-amber-200 uppercase tracking-wide" id="taxiTitle">Airport Taxi Transfer</h4>
-                                <span class="bg-amber-500 text-slate-950 text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Private transfer</span>
+                        <!-- Tours & Tickets Card -->
+                        <div id="cardTours" data-offer-card class="hidden bg-gradient-to-br from-purple-950/40 to-fuchsia-900/20 border border-purple-500/30 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-purple-500/50">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-xl bg-purple-500 text-white flex items-center justify-center text-xl shrink-0 shadow-lg shadow-purple-500/20">
+                                    <i class="fas fa-ticket-alt"></i>
+                                </div>
+                                <div class="flex-grow">
+                                    <div class="flex items-center justify-between flex-wrap gap-2">
+                                        <h4 class="text-sm font-bold text-purple-200 uppercase tracking-wide" id="toursTitle">Local Tours &amp; Tickets</h4>
+                                        <span class="bg-purple-500/20 text-purple-200 text-[9px] font-bold px-2.5 py-1 rounded-full">Explore</span>
+                                    </div>
+                                    <p class="text-xs text-purple-300/90 mt-2 leading-relaxed">
+                                        Browse tickets, walking tours and activities in <span id="toursCityText" class="font-semibold text-purple-200">your destination</span>. Check each activity’s booking and cancellation terms.
+                                    </p>
+                                    <a href="#" id="linkTours" target="_blank" rel="noopener sponsored" data-provider="viator" data-placement="flight_result" class="mt-4 w-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-purple-600/20 transition-all duration-200">
+                                        Explore Activities <i class="fas fa-arrow-right text-[10px]"></i>
+                                    </a>
+                                </div>
                             </div>
-                            <p class="text-xs text-amber-300/90 mt-2 leading-relaxed">
-                                Compare a private airport transfer for your group and luggage. Check the full quote, meeting point, waiting time and cancellation terms before booking.
-                            </p>
-                            <a href="https://kiwitaxi.tpo.mx/dUq07Ia1" target="_blank" rel="noopener sponsored" data-provider="kiwitaxi" data-placement="flight_result" class="mt-4 w-full bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition-all duration-200">
-                                Pre-Book Taxi <i class="fas fa-arrow-right text-[10px]"></i>
-                            </a>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Tours & Tickets Card -->
-                <div id="cardTours" data-offer-card class="hidden bg-gradient-to-br from-purple-950/40 to-fuchsia-900/20 border border-purple-500/30 rounded-2xl p-5 shadow-lg transition-all duration-300 hover:border-purple-500/50">
-                    <div class="flex items-start gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-purple-500 text-white flex items-center justify-center text-xl shrink-0 shadow-lg shadow-purple-500/20">
-                            <i class="fas fa-ticket-alt"></i>
-                        </div>
-                        <div class="flex-grow">
-                            <div class="flex items-center justify-between flex-wrap gap-2">
-                                <h4 class="text-sm font-bold text-purple-200 uppercase tracking-wide" id="toursTitle">Local Tours &amp; Tickets</h4>
-                                <span class="bg-purple-500/20 text-purple-200 text-[9px] font-bold px-2.5 py-1 rounded-full">Explore</span>
-                            </div>
-                            <p class="text-xs text-purple-300/90 mt-2 leading-relaxed">
-                                Browse tickets, walking tours and activities in <span id="toursCityText" class="font-semibold text-purple-200">your destination</span>. Check each activity’s booking and cancellation terms.
-                            </p>
-                            <a href="#" id="linkTours" target="_blank" rel="noopener sponsored" data-provider="viator" data-placement="flight_result" class="mt-4 w-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-purple-600/20 transition-all duration-200">
-                                Explore Activities <i class="fas fa-arrow-right text-[10px]"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
                     </div>
                 </details>
 
@@ -406,7 +425,18 @@
         </div>
     </div>
     </main>
-    <footer class="ag-privacy-footer"><a href="/privacy/">Privacy &amp; cookies</a> · <button class="ag-cookie-settings" type="button" data-cookie-settings>Cookie settings</button></footer>
+    <footer class="ag-privacy-footer w-full max-w-md pt-6 pb-2 px-4 text-center">
+        <div class="text-[11px] text-slate-500 mb-1.5">Airport Guide · Independent live flight status &amp; arrival help</div>
+        <nav aria-label="Footer" class="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-xs text-slate-400">
+            <a href="/guides/dubai/" data-guide-link data-placement="footer">Dubai Guide</a>
+            <span aria-hidden="true">·</span>
+            <a href="/about/">About</a>
+            <span aria-hidden="true">·</span>
+            <a href="/privacy/">Privacy &amp; cookies</a>
+            <span aria-hidden="true">·</span>
+            <button class="ag-cookie-settings" type="button" data-cookie-settings>Cookie settings</button>
+        </nav>
+    </footer>
     <div id="toast" role="status" aria-live="polite" class="fixed left-1/2 bottom-6 -translate-x-1/2 translate-y-3 opacity-0 pointer-events-none z-50 rounded-full bg-slate-800 border border-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-2xl transition-all duration-200">Link copied</div>
     <script>
         // ==========================================
@@ -797,7 +827,7 @@
 
             rememberUploadedBoardingPass(file);
             boardingPassLabel.setAttribute('aria-busy', 'true');
-            setBoardingPassStatus('Reading your boarding pass on this device…');
+            setBoardingPassStatus('Reading your boarding pass 100% locally in your browser…');
             errorMsg.classList.add('hidden');
 
             try {
@@ -833,6 +863,34 @@
             clearUploadedBoardingPass();
             showToast('Boarding pass removed');
         });
+        document.querySelectorAll('[data-example-flight]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const code = btn.dataset.exampleFlight;
+                if (!code) return;
+                flightInput.value = code;
+                searchFlight(code, 'example');
+            });
+        });
+
+        function applyDestinationContext(dest) {
+            const code = String(dest || '').trim().toUpperCase();
+            const badgeEl = document.getElementById('searchBadgeText');
+            const subtitleEl = document.getElementById('searchSubtitle');
+            const guideEl = document.getElementById('frontDubaiGuide');
+            if (code === 'DXB') {
+                document.body.dataset.arrivalAirport = 'DXB';
+                if (badgeEl) badgeEl.textContent = 'Dubai (DXB) · Live Arrival Tracker';
+                if (subtitleEl) subtitleEl.textContent = 'Flying to Dubai (DXB)? Enter your flight number for live Terminal 1–3, gate, baggage belt & delay status.';
+                flightInput.placeholder = 'E.g. EK002, BA107 or EK032';
+                if (guideEl) guideEl.classList.add('border-indigo-400/60', 'bg-indigo-950/45');
+            } else {
+                delete document.body.dataset.arrivalAirport;
+                if (badgeEl) badgeEl.textContent = 'Airport Guide · Live data';
+                if (subtitleEl) subtitleEl.textContent = 'Live gate, terminal, delay and arrival details — without creating an account.';
+                flightInput.placeholder = 'E.g. EK002, BA107 or SK943';
+                if (guideEl) guideEl.classList.remove('border-indigo-400/60', 'bg-indigo-950/45');
+            }
+        }
 
         window.resetSearch = () => {
             resultView.classList.add('hidden');
@@ -843,7 +901,10 @@
             errorMsg.classList.add('hidden');
             clearUploadedBoardingPass();
             hideBoardingPassStatus();
-            history.replaceState({}, '', location.pathname);
+            const cleanUrl = new URL(location.href);
+            cleanUrl.searchParams.delete('flight');
+            history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search);
+            applyDestinationContext(cleanUrl.searchParams.get('dest'));
 
             const cards = ['cardAirhelp', 'cardEsim', 'cardTaxi', 'cardTours', 'secondaryTools', 'arrivalGuide'];
             cards.forEach(cardId => {
@@ -1067,21 +1128,53 @@
 
             document.getElementById('cardHeader').className = `bg-gradient-to-r ${headerGradient} text-white px-5 pb-4 pt-14 flex justify-between items-center relative overflow-hidden transition-colors duration-500`;
 
+            const toolkitContainer = document.getElementById('toolkitContainer');
             const cardAirhelp = document.getElementById('cardAirhelp');
             const cardEsim = document.getElementById('cardEsim');
             const cardTaxi = document.getElementById('cardTaxi');
             const cardTours = document.getElementById('cardTours');
+            const arrivalGuide = document.getElementById('arrivalGuide');
+            const secondaryTools = document.getElementById('secondaryTools');
 
             [cardAirhelp, cardEsim, cardTaxi, cardTours].forEach(card => {
                 if(card) card.classList.add('hidden');
             });
 
-            const arrivalGuide = document.getElementById('arrivalGuide');
-            arrivalGuide.classList.toggle('hidden', f.arr_iata !== 'DXB');
+            const isDxb = f.arr_iata === 'DXB';
+            if (arrivalGuide) arrivalGuide.classList.toggle('hidden', !isDxb);
             const esimLocName = arrCountryName || arrCityName;
-            document.getElementById('esimTitle').textContent = `Mobile data · ${esimLocName}`;
-            document.getElementById('esimDestination').textContent = esimLocName;
-            document.getElementById('taxiTitle').textContent = `Airport Taxi · ${arrCityName}`;
+
+            const esimTitleEl = document.getElementById('esimTitle');
+            const esimBadgeEl = document.getElementById('esimBadge');
+            const esimDescEl = document.getElementById('esimDesc');
+            const esimCtaTextEl = document.getElementById('esimCtaText');
+            const taxiTitleEl = document.getElementById('taxiTitle');
+            const taxiBadgeEl = document.getElementById('taxiBadge');
+            const taxiDescEl = document.getElementById('taxiDesc');
+            const taxiCtaTextEl = document.getElementById('taxiCtaText');
+
+            if (isDxb) {
+                if (esimTitleEl) esimTitleEl.textContent = 'UAE eSIM for Dubai Arrival';
+                if (esimBadgeEl) esimBadgeEl.textContent = 'DXB · UAE Data';
+                if (esimDescEl) esimDescEl.textContent = 'DXB terminal Wi-Fi covers baggage claim, but mobile data helps as soon as you step out for the Metro, taxi or your hotel. Check your UAE roaming first or compare instant eSIM plans.';
+                if (esimCtaTextEl) esimCtaTextEl.textContent = 'Check UAE eSIM plans';
+
+                if (taxiTitleEl) taxiTitleEl.textContent = 'DXB Transfer to Your Hotel';
+                if (taxiBadgeEl) taxiBadgeEl.textContent = 'DXB · Fixed quote';
+                if (taxiDescEl) taxiDescEl.textContent = 'Skip the DXB arrival taxi queue — helpful at Terminal 2, late at night or with luggage. Drivers track your flight and meet you in Arrivals at a fixed price.';
+                if (taxiCtaTextEl) taxiCtaTextEl.textContent = 'See fixed DXB taxi prices';
+            } else {
+                if (esimTitleEl) esimTitleEl.textContent = `Mobile data · ${esimLocName}`;
+                if (esimBadgeEl) esimBadgeEl.textContent = 'Travel eSIM';
+                if (esimDescEl) esimDescEl.textContent = `Need data in ${esimLocName}? Check your roaming allowance, then compare travel eSIMs. Choose your destination and check phone compatibility before buying.`;
+                if (esimCtaTextEl) esimCtaTextEl.textContent = 'Compare eSIM plans';
+
+                if (taxiTitleEl) taxiTitleEl.textContent = `Airport Taxi · ${arrCityName}`;
+                if (taxiBadgeEl) taxiBadgeEl.textContent = 'Private transfer';
+                if (taxiDescEl) taxiDescEl.textContent = 'Compare a private airport transfer for your group and luggage. Check the full quote, meeting point, waiting time and cancellation terms before booking.';
+                if (taxiCtaTextEl) taxiCtaTextEl.textContent = 'Pre-Book Taxi';
+            }
+
             document.getElementById('toursTitle').textContent = `Tours & Experiences · ${arrCityName}`;
             document.getElementById('toursCityText').textContent = arrCityName;
 
@@ -1091,16 +1184,20 @@
                 toursLink.href = `https://www.viator.com/searchResults/all?text=${encodeURIComponent(arrCityName)}`;
             }
 
-            if (isCancelled || delayMins >= 180) {
-                if(cardAirhelp) cardAirhelp.classList.remove('hidden');
-                if(cardTaxi) cardTaxi.classList.remove('hidden');
-                if(cardTours) cardTours.classList.remove('hidden');
-            } else {
-                if(cardEsim) cardEsim.classList.remove('hidden');
-                if(cardTaxi) cardTaxi.classList.remove('hidden');
-                if(cardTours) cardTours.classList.remove('hidden');
+            const isMajorDisruption = isCancelled || delayMins >= 180;
+            const orderedCards = isMajorDisruption
+                ? [cardAirhelp, cardEsim, cardTaxi, arrivalGuide, secondaryTools]
+                : [cardEsim, cardTaxi, arrivalGuide, secondaryTools, cardAirhelp];
+            if (toolkitContainer) {
+                orderedCards.forEach(el => {
+                    if (el) toolkitContainer.appendChild(el);
+                });
             }
-            const secondaryTools = document.getElementById('secondaryTools');
+
+            if (isMajorDisruption && cardAirhelp) cardAirhelp.classList.remove('hidden');
+            if (cardEsim) cardEsim.classList.remove('hidden');
+            if (cardTaxi) cardTaxi.classList.remove('hidden');
+            if (cardTours) cardTours.classList.remove('hidden');
             if (secondaryTools) secondaryTools.classList.remove('hidden');
         }
 
@@ -1180,7 +1277,12 @@
             }
         }
 
-        const initialFlight = new URLSearchParams(location.search).get('flight');
+        const initialParams = new URLSearchParams(location.search);
+        const initialDest = (initialParams.get('dest') || '').trim().toUpperCase();
+        if (initialDest) {
+            applyDestinationContext(initialDest);
+        }
+        const initialFlight = initialParams.get('flight');
         if (initialFlight) {
             const normalized = normalizeFlightQuery(initialFlight);
             if (/^[A-Z0-9]{3,8}$/.test(normalized) && /\d/.test(normalized)) {
