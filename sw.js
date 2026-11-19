@@ -1,11 +1,11 @@
-const CACHE_NAME = 'airportguide-v8';
+const CACHE_NAME = 'airportguide-v9';
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './tz-lookup.min.js',
   './assets/partner-links.js?v=20261106-dubai-partners',
-  './assets/analytics.js?v=20261106-affiliates',
+  './assets/analytics.js?v=20261119-ga4',
   './assets/analytics.css?v=20261106-affiliates',
   './assets/guide.css?v=20261114-dxb',
   './guides/dubai/',

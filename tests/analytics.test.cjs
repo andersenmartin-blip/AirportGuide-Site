@@ -31,7 +31,7 @@ function boot({ saved, hostname = 'airportguideapp.com', guide, brokenStorage = 
         addEventListener: (type, listener) => { (documentListeners[type] ||= []).push(listener); },
         dispatchEvent: event => { (documentListeners[event.type] || []).forEach(listener => listener(event)); }
     };
-    Object.defineProperty(document, 'cookie', { get: () => '_ga=one; _ga_YYW1KW4CGN=two; preference=keep', set: value => cookieWrites.push(value) });
+    Object.defineProperty(document, 'cookie', { get: () => '_ga=one; _ga_4VPVGHFJ90=two; preference=keep', set: value => cookieWrites.push(value) });
     const window = {};
     const localStorage = { getItem(key) { if (brokenStorage) throw Error('storage blocked'); return storage.get(key) || null; }, setItem(key, value) { if (brokenStorage) throw Error('storage blocked'); storage.set(key, value); } };
     const context = { window, document, location, localStorage, URL, Date, Event };
@@ -55,7 +55,7 @@ test('accepting consent loads the existing measurement ID and keeps advertising 
     const app = boot();
     app.handlers['[data-allow]']();
     assert.equal(app.externalScripts.length, 1);
-    assert.match(app.externalScripts[0], /G-YYW1KW4CGN/);
+    assert.match(app.externalScripts[0], /G-4VPVGHFJ90/);
     const consent = app.commands().filter(command => command[0] === 'consent');
     assert.equal(consent[0][2].analytics_storage, 'denied');
     assert.equal(consent[1][2].analytics_storage, 'granted');

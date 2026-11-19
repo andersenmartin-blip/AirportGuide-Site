@@ -32,7 +32,7 @@ An affiliate click is not a sale. Revenue and approved commissions must come fro
 
 ## Consent and traffic attribution
 
-`assets/analytics.js` is the single loader on the search page, Dubai guide and privacy page. It blocks Google requests until a visitor allows analytics, retains the existing measurement ID `G-YYW1KW4CGN`, and keeps advertising storage/user-data/personalization denied. Declining leaves search, uploads and links functional. The choice is remembered for 180 days; withdrawal clears Analytics cookies and reloads the page. Preview hosts never load the production tag. Consent-aware metrics cover consenting visitors and are not a census of all traffic.
+`assets/analytics.js` is the single loader on the search page, Dubai guide and privacy page. It blocks Google requests until a visitor allows analytics, retains the existing measurement ID `G-4VPVGHFJ90`, and keeps advertising storage/user-data/personalization denied. Declining leaves search, uploads and links functional. The choice is remembered for 180 days; withdrawal clears Analytics cookies and reloads the page. Preview hosts never load the production tag. Consent-aware metrics cover consenting visitors and are not a census of all traffic.
 
 The three changed measurement assets use a release query version in the HTML and service-worker precache. This avoids an observed upgrade issue where an older service worker supplied an old link script alongside new HTML on the first visit. Bump the asset version alongside future changes to these scripts/styles.
 
@@ -66,7 +66,7 @@ Both initial Dubai offers now have owner-generated destination links. Deep links
 
 The owner has connected GA4, and account discovery exposes the property `airportguide-f0899` (517717939). The reporting query is blocked by the expired Supermetrics trial (`TRIAL_EXPIRED`); it did not return event data. Code-level event generation and consent are tested, but receipt in the owner's property, custom dimensions and key-event configuration have not been verified. Once report access is available:
 
-1. Check the property's web data stream uses `G-YYW1KW4CGN` and points to airportguideapp.com.
+1. Check the property's web data stream uses `G-4VPVGHFJ90` and points to airportguideapp.com.
 2. Confirm `destination_guide_view`, `flight_search_started`, `flight_search_success`, `flight_search_failed`, `offer_impression` and `affiliate_click` in Realtime/DebugView using a real consenting visit.
 3. Register event-scoped dimensions `provider`, `placement`, `arrival_airport` and `partner_sub_id` if not already present. Configure `affiliate_click` as a key event for outbound intent; never call it a purchase or use it as confirmed revenue.
 4. Report sessions by session source/medium/campaign and landing page, successful searches, affiliate clicks by provider/placement, and provider-approved commission by SubID. Do not sum legacy click events with `affiliate_click`.

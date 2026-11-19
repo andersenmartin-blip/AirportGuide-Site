@@ -1,7 +1,7 @@
 /* Optional analytics. Flight lookup and partner navigation never depend on it. */
 (function () {
     'use strict';
-    const MEASUREMENT_ID = 'G-YYW1KW4CGN';
+    const MEASUREMENT_ID = 'G-4VPVGHFJ90';
     const CONSENT_KEY = 'airportguide_analytics_consent_v1';
     const CONSENT_AGE = 180 * 24 * 60 * 60 * 1000;
     const production = ['airportguideapp.com', 'www.airportguideapp.com'].includes(location.hostname);
