@@ -1,6 +1,6 @@
 # Partner links and measurement
 
-The live site and airport arrival guides (`/guides/`, `/guides/dubai/`, `/guides/jfk/`, `/guides/bangkok/`, `/guides/tokyo/`) share `assets/partner-links.js`. Existing publisher URLs for Airalo, Kiwitaxi and AirHelp are retained unchanged. No publisher identifier has been invented, and no test purchase has been made.
+The live site and airport arrival guides (`/guides/`, `/guides/dubai/`, `/guides/jfk/`, `/guides/bangkok/`, `/guides/tokyo/`, `/guides/istanbul/`, `/guides/cancun/`, `/guides/marrakech/`, `/guides/antalya/`) share `assets/partner-links.js`. Publisher-generated destination deep links (`DXB`, `JFK`, `BKK`, `HND`, `NRT`, `TYO`, `IST`, `SAW`, `CUN`, `RAK`, `AYT`) are resolved for matching airports, while existing generic publisher URLs are retained for all other destinations. No publisher identifier has been invented, and no test purchase has been made.
 
 ## Link audit — 6 November 2026
 
@@ -20,13 +20,13 @@ The existing GA4 property is retained. These events compare the flight result an
 | Event | Meaning |
 | --- | --- |
 | `flight_search_success` | The flight request succeeded and the result was rendered. |
-| `destination_guide_click` | A visitor selected the Guides hub or an arrival guide (`dubai`, `jfk`, `bangkok`, `tokyo`, `hub`) from search, results, hub or footer links. |
-| `destination_guide_view` | An individual airport arrival guide (`dubai`, `jfk`, `bangkok`, `tokyo`) loaded with `data-guide` and `arrival_airport`. |
+| `destination_guide_click` | A visitor selected the Guides hub or an arrival guide (`dubai`, `jfk`, `bangkok`, `tokyo`, `istanbul`, `cancun`, `marrakech`, `antalya`, `hub`) from search, results, hub or footer links. |
+| `destination_guide_view` | An individual airport arrival guide (`dubai`, `jfk`, `bangkok`, `tokyo`, `istanbul`, `cancun`, `marrakech`, `antalya`) loaded with `data-guide` and `arrival_airport`. |
 | `offer_impression` | At least half of an offer card entered the viewport; counted once per result render. Collapsed offers do not count until visible. |
 | `affiliate_click` | A visitor clicked a configured partner link. |
 | `outbound_click` | A visitor clicked the ordinary Viator destination link. |
 
-Offer events include provider, placement (`flight_result`, `dubai_guide`, `jfk_guide`, `bangkok_guide`, `tokyo_guide` or `guides_hub`), arrival airport, a configured-affiliate flag and a partner SubID where supported. The flag means the URL has recognized affiliate attribution, not that account approval or commission is confirmed. They do not include boarding-pass files, names, booking references or flight numbers. `flight_search_started` replaces the old `search` event that sent a flight number. It records the entry method (`manual`, `boarding_pass`, `recent` or `shared_link`); `flight_search_failed` records timeout/unavailable. Legacy `click_esim`, `click_taxi` and `click_airhelp` events remain for current reports; do not add them to `affiliate_click` when counting clicks, since they describe the same action.
+Offer events include provider, placement (`flight_result`, `dubai_guide`, `jfk_guide`, `bangkok_guide`, `tokyo_guide`, `istanbul_guide`, `cancun_guide`, `marrakech_guide`, `antalya_guide` or `guides_hub`), arrival airport, a configured-affiliate flag and a partner SubID where supported. The flag means the URL has recognized affiliate attribution, not that account approval or commission is confirmed. They do not include boarding-pass files, names, booking references or flight numbers. `flight_search_started` replaces the old `search` event that sent a flight number. It records the entry method (`manual`, `boarding_pass`, `recent` or `shared_link`); `flight_search_failed` records timeout/unavailable. Legacy `click_esim`, `click_taxi` and `click_airhelp` events remain for current reports; do not add them to `affiliate_click` when counting clicks, since they describe the same action.
 
 An affiliate click is not a sale. Revenue and approved commissions must come from partner reports. Analytics blockers may reduce recorded events without affecting navigation or flight lookup.
 

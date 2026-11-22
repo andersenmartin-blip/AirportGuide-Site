@@ -11,6 +11,10 @@ const dubaiHtml = readFileSync(join(root, 'guides/dubai/index.html'), 'utf8');
 const jfkHtml = readFileSync(join(root, 'guides/jfk/index.html'), 'utf8');
 const bangkokHtml = readFileSync(join(root, 'guides/bangkok/index.html'), 'utf8');
 const tokyoHtml = readFileSync(join(root, 'guides/tokyo/index.html'), 'utf8');
+const istanbulHtml = readFileSync(join(root, 'guides/istanbul/index.html'), 'utf8');
+const cancunHtml = readFileSync(join(root, 'guides/cancun/index.html'), 'utf8');
+const marrakechHtml = readFileSync(join(root, 'guides/marrakech/index.html'), 'utf8');
+const antalyaHtml = readFileSync(join(root, 'guides/antalya/index.html'), 'utf8');
 const aboutHtml = readFileSync(join(root, 'about/index.html'), 'utf8');
 const privacyHtml = readFileSync(join(root, 'privacy/index.html'), 'utf8');
 const sitemapXml = readFileSync(join(root, 'sitemap.xml'), 'utf8');
@@ -85,6 +89,11 @@ function bootPopulateCard() {
             BKK: { city: 'Bangkok', country: 'Thailand', lat: 13.69, lng: 100.75 },
             HND: { city: 'Tokyo', country: 'Japan', lat: 35.55, lng: 139.78 },
             NRT: { city: 'Tokyo', country: 'Japan', lat: 35.76, lng: 140.39 },
+            IST: { city: 'Istanbul', country: 'Turkey', lat: 41.27, lng: 28.75 },
+            SAW: { city: 'Istanbul', country: 'Turkey', lat: 40.90, lng: 29.31 },
+            CUN: { city: 'Cancún', country: 'Mexico', lat: 21.04, lng: -86.88 },
+            RAK: { city: 'Marrakech', country: 'Morocco', lat: 31.61, lng: -8.04 },
+            AYT: { city: 'Antalya', country: 'Turkey', lat: 36.90, lng: 30.80 },
             CPH: { city: 'Copenhagen', country: 'Denmark', lat: 55.61, lng: 12.65 }
         },
         getWeather() {},
@@ -242,6 +251,26 @@ test('dest=DXB context and resetSearch preserve campaign parameters while cleari
     window.applyDestinationContext('TYO');
     assert.equal(document.body.dataset.arrivalAirport, 'TYO');
     assert.match(getEl('searchSubtitle').textContent, /Tokyo/);
+
+    window.applyDestinationContext('IST');
+    assert.equal(document.body.dataset.arrivalAirport, 'IST');
+    assert.match(getEl('searchSubtitle').textContent, /Istanbul Airport \(IST\)/);
+
+    window.applyDestinationContext('SAW');
+    assert.equal(document.body.dataset.arrivalAirport, 'SAW');
+    assert.match(getEl('searchSubtitle').textContent, /Sabiha Gökçen \(SAW\)/);
+
+    window.applyDestinationContext('CUN');
+    assert.equal(document.body.dataset.arrivalAirport, 'CUN');
+    assert.match(getEl('searchSubtitle').textContent, /Cancún \(CUN\)/);
+
+    window.applyDestinationContext('RAK');
+    assert.equal(document.body.dataset.arrivalAirport, 'RAK');
+    assert.match(getEl('searchSubtitle').textContent, /Marrakech Menara \(RAK\)/);
+
+    window.applyDestinationContext('AYT');
+    assert.equal(document.body.dataset.arrivalAirport, 'AYT');
+    assert.match(getEl('searchSubtitle').textContent, /Antalya \(AYT\)/);
 });
 
 test('Dubai guide embedded flight form normalizes flight numbers and preserves Google Ads campaign params', () => {
@@ -290,8 +319,21 @@ test('Dubai guide, front page, footer, boarding pass copy and sitemap meet Googl
     assert.match(indexHtml, /id="frontDubaiGuide"[^>]*href="\/guides\/dubai\/"[^>]*data-guide-link[^>]*data-placement="search"/);
     assert.match(indexHtml, /Processed 100% locally in your browser/);
 
-    // Footer links (Arrival Guides + About + Privacy) across all 8 public pages
-    for (const html of [indexHtml, guidesHubHtml, dubaiHtml, jfkHtml, bangkokHtml, tokyoHtml, aboutHtml, privacyHtml]) {
+    // Footer links (Arrival Guides + About + Privacy) across all 12 public pages
+    for (const html of [
+        indexHtml,
+        guidesHubHtml,
+        dubaiHtml,
+        jfkHtml,
+        bangkokHtml,
+        tokyoHtml,
+        istanbulHtml,
+        cancunHtml,
+        marrakechHtml,
+        antalyaHtml,
+        aboutHtml,
+        privacyHtml
+    ]) {
         assert.match(html, /href="\/guides\/"/);
         assert.match(html, /href="\/about\/"/);
         assert.match(html, /href="\/privacy\/"/);
@@ -305,6 +347,10 @@ test('Dubai guide, front page, footer, boarding pass copy and sitemap meet Googl
         'https://airportguideapp.com/guides/jfk/',
         'https://airportguideapp.com/guides/bangkok/',
         'https://airportguideapp.com/guides/tokyo/',
+        'https://airportguideapp.com/guides/istanbul/',
+        'https://airportguideapp.com/guides/cancun/',
+        'https://airportguideapp.com/guides/marrakech/',
+        'https://airportguideapp.com/guides/antalya/',
         'https://airportguideapp.com/about/',
         'https://airportguideapp.com/privacy/'
     ]) {
@@ -312,13 +358,18 @@ test('Dubai guide, front page, footer, boarding pass copy and sitemap meet Googl
     }
 });
 
-test('JFK, BKK, HND and NRT arrivals surface the matching arrival guide and tailored card copy', () => {
+test('all destination airport arrivals surface the matching arrival guide and tailored card copy', () => {
     const { populateCard, getEl } = bootPopulateCard();
     for (const [arrIata, expectedHref, expectedGuide, expectedTitle, expectedEsim, expectedTaxi] of [
         ['JFK', '/guides/jfk/', 'jfk', 'Arriving at New York (JFK)?', 'US eSIM for New York Arrival', 'JFK Transfer to Manhattan'],
         ['BKK', '/guides/bangkok/', 'bangkok', 'Arriving at Bangkok (BKK)?', 'Thailand eSIM for Bangkok Arrival', 'BKK Transfer to Your Hotel'],
         ['HND', '/guides/tokyo/', 'tokyo', 'Arriving at Tokyo Haneda (HND)?', 'Japan eSIM for Tokyo Arrival', 'Haneda (HND) Hotel Transfer'],
-        ['NRT', '/guides/tokyo/', 'tokyo', 'Arriving at Tokyo Narita (NRT)?', 'Japan eSIM for Tokyo Arrival', 'Narita (NRT) Transfer to Tokyo']
+        ['NRT', '/guides/tokyo/', 'tokyo', 'Arriving at Tokyo Narita (NRT)?', 'Japan eSIM for Tokyo Arrival', 'Narita (NRT) Transfer to Tokyo'],
+        ['IST', '/guides/istanbul/', 'istanbul', 'Arriving at Istanbul (IST)?', 'Turkey eSIM for Istanbul Arrival', 'IST Transfer to Central Istanbul'],
+        ['SAW', '/guides/istanbul/', 'istanbul', 'Arriving at Istanbul Sabiha Gökçen (SAW)?', 'Turkey eSIM for Istanbul Arrival', 'SAW Transfer to Central Istanbul'],
+        ['CUN', '/guides/cancun/', 'cancun', 'Arriving at Cancún (CUN)?', 'Mexico eSIM for Cancún Arrival', 'CUN Transfer to Your Resort'],
+        ['RAK', '/guides/marrakech/', 'marrakech', 'Arriving at Marrakech (RAK)?', 'Morocco eSIM for Marrakech Arrival', 'RAK Transfer to Your Riad or Hotel'],
+        ['AYT', '/guides/antalya/', 'antalya', 'Arriving at Antalya (AYT)?', 'Turkey eSIM for Antalya Arrival', 'AYT Resort Transfer (Lara/Belek/Side)']
     ]) {
         populateCard({
             flight_number: 'BA99',
@@ -360,15 +411,19 @@ test('JFK, BKK, HND and NRT arrivals surface the matching arrival guide and tail
     assert.equal(getEl('arrivalGuide').classList.contains('hidden'), true);
 });
 
-test('guides hub and new destination guides keep valid canonicals, partner links and flight forms', () => {
-    for (const [html, canonical, formId, inputId, errorId, sampleInput, normalizedFlight, expectedDest, airaloPlacement, kiwitaxiPlacement] of [
-        [jfkHtml, 'https://airportguideapp.com/guides/jfk/', 'jfkFlightForm', 'jfkFlightInput', 'jfkFlightError', ' ba 0175 ', 'BA175', 'JFK', 'jfk_guide', 'jfk_guide'],
-        [bangkokHtml, 'https://airportguideapp.com/guides/bangkok/', 'bkkFlightForm', 'bkkFlightInput', 'bkkFlightError', ' tg 0911 ', 'TG911', 'BKK', 'bangkok_guide', 'bangkok_guide'],
-        [tokyoHtml, 'https://airportguideapp.com/guides/tokyo/', 'tokyoFlightForm', 'tokyoFlightInput', 'tokyoFlightError', ' ba 007 ', 'BA7', 'TYO', 'tokyo_guide', 'tokyo_guide']
+test('guides hub and destination guides keep valid canonicals, verified deep links and flight forms', () => {
+    for (const [html, canonical, formId, inputId, errorId, sampleInput, normalizedFlight, expectedDest, airaloPath, kiwitaxiPath, placement] of [
+        [jfkHtml, 'https://airportguideapp.com/guides/jfk/', 'jfkFlightForm', 'jfkFlightInput', 'jfkFlightError', ' ba 0175 ', 'BA175', 'JFK', 'Jknr97', '1hDpZYlL', 'jfk_guide'],
+        [bangkokHtml, 'https://airportguideapp.com/guides/bangkok/', 'bkkFlightForm', 'bkkFlightInput', 'bkkFlightError', ' tg 0911 ', 'TG911', 'BKK', 'B5gXNW', 'yBxchSrN', 'bangkok_guide'],
+        [tokyoHtml, 'https://airportguideapp.com/guides/tokyo/', 'tokyoFlightForm', 'tokyoFlightInput', 'tokyoFlightError', ' ba 007 ', 'BA7', 'TYO', '0GqJgE', 'tjgnYPpx', 'tokyo_guide'],
+        [istanbulHtml, 'https://airportguideapp.com/guides/istanbul/', 'istanbulFlightForm', 'istanbulFlightInput', 'istanbulFlightError', ' tk 01980 ', 'TK1980', 'IST', 'n4M1q9', 'Rz0XEDHl', 'istanbul_guide'],
+        [cancunHtml, 'https://airportguideapp.com/guides/cancun/', 'cancunFlightForm', 'cancunFlightInput', 'cancunFlightError', ' ba 02203 ', 'BA2203', 'CUN', 'GbWjP9', 'egoulI9f', 'cancun_guide'],
+        [marrakechHtml, 'https://airportguideapp.com/guides/marrakech/', 'marrakechFlightForm', 'marrakechFlightInput', 'marrakechFlightError', ' ba 02662 ', 'BA2662', 'RAK', 'Jknre7', '48Erupjb', 'marrakech_guide'],
+        [antalyaHtml, 'https://airportguideapp.com/guides/antalya/', 'antalyaFlightForm', 'antalyaFlightInput', 'antalyaFlightError', ' ba 02774 ', 'BA2774', 'AYT', 'n4M1q9', 'PIKhZZGL', 'antalya_guide']
     ]) {
         assert.ok(html.includes(`<link rel="canonical" href="${canonical}">`), canonical);
-        assert.match(html, new RegExp(`href="https://airalo\\.pxf\\.io/2RKYkg"[^>]*data-provider="airalo"[^>]*data-placement="${airaloPlacement}"`));
-        assert.match(html, new RegExp(`href="https://kiwitaxi\\.tpo\\.mx/dUq07Ia1"[^>]*data-provider="kiwitaxi"[^>]*data-placement="${kiwitaxiPlacement}"`));
+        assert.match(html, new RegExp(`href="https://airalo\\.pxf\\.io/${airaloPath}"[^>]*data-provider="airalo"[^>]*data-placement="${placement}"`));
+        assert.match(html, new RegExp(`href="https://kiwitaxi\\.tpo\\.mx/${kiwitaxiPath}"[^>]*data-provider="kiwitaxi"[^>]*data-placement="${placement}"`));
 
         const scriptStart = html.lastIndexOf('<script>');
         const scriptEnd = html.lastIndexOf('</script>');
@@ -392,7 +447,16 @@ test('guides hub and new destination guides keep valid canonicals, partner links
     }
 
     assert.ok(guidesHubHtml.includes('<link rel="canonical" href="https://airportguideapp.com/guides/">'));
-    for (const path of ['/guides/dubai/', '/guides/jfk/', '/guides/bangkok/', '/guides/tokyo/']) {
+    for (const path of [
+        '/guides/dubai/',
+        '/guides/jfk/',
+        '/guides/bangkok/',
+        '/guides/tokyo/',
+        '/guides/istanbul/',
+        '/guides/cancun/',
+        '/guides/marrakech/',
+        '/guides/antalya/'
+    ]) {
         assert.ok(guidesHubHtml.includes(`href="${path}"`), path);
     }
 });

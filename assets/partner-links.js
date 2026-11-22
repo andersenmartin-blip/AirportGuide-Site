@@ -15,10 +15,26 @@
     // owner's programs have approved airportguideapp.com. Empty means use the
     // existing generic link, not an invented publisher ID or deep link.
     const dubaiLinks = Object.freeze({ airalo: 'https://airalo.pxf.io/KB66v9', kiwitaxi: 'https://kiwitaxi.tpo.mx/RyxrAcPa', viator: '' });
-    const destinationLinks = Object.freeze({ DXB: dubaiLinks });
+    const destinationLinks = Object.freeze({
+        DXB: dubaiLinks,
+        JFK: Object.freeze({ airalo: 'https://airalo.pxf.io/Jknr97', kiwitaxi: 'https://kiwitaxi.tpo.mx/1hDpZYlL' }),
+        BKK: Object.freeze({ airalo: 'https://airalo.pxf.io/B5gXNW', kiwitaxi: 'https://kiwitaxi.tpo.mx/yBxchSrN' }),
+        HND: Object.freeze({ airalo: 'https://airalo.pxf.io/0GqJgE', kiwitaxi: 'https://kiwitaxi.tpo.mx/61dw32HB' }),
+        NRT: Object.freeze({ airalo: 'https://airalo.pxf.io/0GqJgE', kiwitaxi: 'https://kiwitaxi.tpo.mx/jxcdlcjr' }),
+        TYO: Object.freeze({ airalo: 'https://airalo.pxf.io/0GqJgE', kiwitaxi: 'https://kiwitaxi.tpo.mx/tjgnYPpx' }),
+        IST: Object.freeze({ airalo: 'https://airalo.pxf.io/n4M1q9', kiwitaxi: 'https://kiwitaxi.tpo.mx/Rz0XEDHl' }),
+        SAW: Object.freeze({ airalo: 'https://airalo.pxf.io/n4M1q9', kiwitaxi: 'https://kiwitaxi.tpo.mx/AucFbVx4' }),
+        CUN: Object.freeze({ airalo: 'https://airalo.pxf.io/GbWjP9', kiwitaxi: 'https://kiwitaxi.tpo.mx/egoulI9f' }),
+        RAK: Object.freeze({ airalo: 'https://airalo.pxf.io/Jknre7', kiwitaxi: 'https://kiwitaxi.tpo.mx/48Erupjb' }),
+        AYT: Object.freeze({ airalo: 'https://airalo.pxf.io/n4M1q9', kiwitaxi: 'https://kiwitaxi.tpo.mx/PIKhZZGL' })
+    });
 
     function subId(context = {}) {
-        const placement = ['dubai_guide', 'jfk_guide', 'bangkok_guide', 'tokyo_guide', 'guides_hub', 'flight_result'].includes(context.placement) ? context.placement : 'site';
+        const placement = [
+            'dubai_guide', 'jfk_guide', 'bangkok_guide', 'tokyo_guide',
+            'istanbul_guide', 'cancun_guide', 'marrakech_guide', 'antalya_guide',
+            'guides_hub', 'flight_result'
+        ].includes(context.placement) ? context.placement : 'site';
         const airport = /^[A-Z]{3}$/.test(context.airport || '') ? context.airport.toLowerCase() : 'general';
         // Only the named campaign is exported to partner reporting. Visitors'
         // arbitrary URL parameters and unique identifiers never go here.

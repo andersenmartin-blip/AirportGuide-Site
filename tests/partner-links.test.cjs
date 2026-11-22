@@ -163,7 +163,7 @@ test('the UAE Airalo partner link renders for Dubai with attribution and resets 
     assert.equal(url.origin + url.pathname, 'https://airalo.pxf.io/KB66v9');
     assert.equal(url.searchParams.get('subId1'), 'ag_dubai_guide_dxb_other');
     assert.equal(link.dataset.affiliate, 'true');
-    api.refresh({ airport: 'JFK' });
+    api.refresh({ airport: 'MAD' });
     assert.equal(new URL(link.href).pathname, '/2RKYkg');
     link.dataset.placement = 'flight_result';
     api.refresh({ airport: 'DXB' });
@@ -172,22 +172,31 @@ test('the UAE Airalo partner link renders for Dubai with attribution and resets 
     assert.equal(url.searchParams.get('subId1'), 'ag_flight_result_dxb_other');
 });
 
-test('new airport guides resolve generic verified links with guide-specific SubIDs', () => {
-    for (const [airport, placement, expectedSub] of [
-        ['JFK', 'jfk_guide', 'ag_jfk_guide_jfk_other'],
-        ['BKK', 'bangkok_guide', 'ag_bangkok_guide_bkk_other'],
-        ['TYO', 'tokyo_guide', 'ag_tokyo_guide_tyo_other'],
-        ['', 'guides_hub', 'ag_guides_hub_general_other']
+test('all destination airport guides resolve exact verified deep links with guide-specific SubIDs', () => {
+    for (const [airport, placement, expectedAiraloPath, expectedKiwiPath, expectedSub] of [
+        ['DXB', 'dubai_guide', '/KB66v9', '/RyxrAcPa', 'ag_dubai_guide_dxb_other'],
+        ['JFK', 'jfk_guide', '/Jknr97', '/1hDpZYlL', 'ag_jfk_guide_jfk_other'],
+        ['BKK', 'bangkok_guide', '/B5gXNW', '/yBxchSrN', 'ag_bangkok_guide_bkk_other'],
+        ['HND', 'tokyo_guide', '/0GqJgE', '/61dw32HB', 'ag_tokyo_guide_hnd_other'],
+        ['NRT', 'tokyo_guide', '/0GqJgE', '/jxcdlcjr', 'ag_tokyo_guide_nrt_other'],
+        ['TYO', 'tokyo_guide', '/0GqJgE', '/tjgnYPpx', 'ag_tokyo_guide_tyo_other'],
+        ['IST', 'istanbul_guide', '/n4M1q9', '/Rz0XEDHl', 'ag_istanbul_guide_ist_other'],
+        ['SAW', 'istanbul_guide', '/n4M1q9', '/AucFbVx4', 'ag_istanbul_guide_saw_other'],
+        ['CUN', 'cancun_guide', '/GbWjP9', '/egoulI9f', 'ag_cancun_guide_cun_other'],
+        ['RAK', 'marrakech_guide', '/Jknre7', '/48Erupjb', 'ag_marrakech_guide_rak_other'],
+        ['AYT', 'antalya_guide', '/n4M1q9', '/PIKhZZGL', 'ag_antalya_guide_ayt_other'],
+        ['', 'guides_hub', '/2RKYkg', '/dUq07Ia1', 'ag_guides_hub_general_other'],
+        ['MAD', 'flight_result', '/2RKYkg', '/dUq07Ia1', 'ag_flight_result_mad_other']
     ]) {
         const airalo = { dataset: { provider: 'airalo', placement } };
         const kiwitaxi = { dataset: { provider: 'kiwitaxi', placement } };
         boot({ airport, anchors: [airalo, kiwitaxi] });
         const aUrl = new URL(airalo.href);
         const kUrl = new URL(kiwitaxi.href);
-        assert.equal(aUrl.origin + aUrl.pathname, 'https://airalo.pxf.io/2RKYkg');
+        assert.equal(aUrl.origin + aUrl.pathname, `https://airalo.pxf.io${expectedAiraloPath}`);
         assert.equal(aUrl.searchParams.get('subId1'), expectedSub);
         assert.equal(airalo.rel, 'noopener sponsored');
-        assert.equal(kUrl.origin + kUrl.pathname, 'https://kiwitaxi.tpo.mx/dUq07Ia1');
+        assert.equal(kUrl.origin + kUrl.pathname, `https://kiwitaxi.tpo.mx${expectedKiwiPath}`);
         assert.equal(kUrl.searchParams.get('sub_id'), expectedSub);
         assert.equal(kiwitaxi.rel, 'noopener sponsored');
     }

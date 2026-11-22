@@ -41,13 +41,24 @@ function worker() {
 
 test('the Dubai and new airport guides cannot overwrite the flight-search page in the offline cache', async () => {
     const sw = worker();
+    const guidePaths = [
+        '/guides/',
+        '/guides/dubai/',
+        '/guides/jfk/',
+        '/guides/bangkok/',
+        '/guides/tokyo/',
+        '/guides/istanbul/',
+        '/guides/cancun/',
+        '/guides/marrakech/',
+        '/guides/antalya/'
+    ];
     await sw.request('/?flight=SK943');
-    for (const guidePath of ['/guides/', '/guides/dubai/', '/guides/jfk/', '/guides/bangkok/', '/guides/tokyo/']) {
+    for (const guidePath of guidePaths) {
         await sw.request(guidePath);
     }
     sw.offline();
     assert.equal(await (await sw.request('/?flight=EK152')).text(), 'Flight search');
-    for (const guidePath of ['/guides/', '/guides/dubai/', '/guides/jfk/', '/guides/bangkok/', '/guides/tokyo/']) {
+    for (const guidePath of guidePaths) {
         assert.equal(await (await sw.request(guidePath)).text(), `Guide ${guidePath}`);
     }
 });

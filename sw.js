@@ -1,10 +1,10 @@
-const CACHE_NAME = 'airportguide-v10';
+const CACHE_NAME = 'airportguide-v11';
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './tz-lookup.min.js',
-  './assets/partner-links.js?v=20261122-guides',
+  './assets/partner-links.js?v=20261122-wave2',
   './assets/analytics.js?v=20261122-guides',
   './assets/analytics.css?v=20261106-affiliates',
   './assets/guide.css?v=20261122-guides',
@@ -13,6 +13,10 @@ const CORE_ASSETS = [
   './guides/jfk/',
   './guides/bangkok/',
   './guides/tokyo/',
+  './guides/istanbul/',
+  './guides/cancun/',
+  './guides/marrakech/',
+  './guides/antalya/',
   './about/',
   './privacy/'
 ];

@@ -18,6 +18,7 @@ function boot({ saved, hostname = 'airportguideapp.com', guide, brokenStorage = 
     const internal = { href: '/guides/dubai/', getAttribute() { return '/guides/dubai/'; } };
     const hubLink = { href: '/guides/', getAttribute() { return '/guides/'; } };
     const jfkLink = { href: '/guides/jfk/', getAttribute() { return '/guides/jfk/'; } };
+    const istanbulLink = { href: '/guides/istanbul/', getAttribute() { return '/guides/istanbul/'; } };
     const external = { href: 'https://www.airalo.com/', getAttribute() { return this.href; } };
     const partner = { href: 'https://airalo.pxf.io/2RKYkg', dataset: { provider: 'airalo', placement: 'dubai_guide' },
         getAttribute() { return this.href; }, hasAttribute() { return false; } };
@@ -28,7 +29,7 @@ function boot({ saved, hostname = 'airportguideapp.com', guide, brokenStorage = 
         head: { appendChild: element => externalScripts.push(element.src) },
         referrer: 'https://example.com/ref?booking_ref=PRIVATE-REFERRER',
         activeElement: { focus() {} },
-        querySelectorAll: selector => selector === 'a[href]' ? [internal, hubLink, jfkLink, external, partner] : selector === 'a[data-provider]' ? [partner] : [],
+        querySelectorAll: selector => selector === 'a[href]' ? [internal, hubLink, jfkLink, istanbulLink, external, partner] : selector === 'a[data-provider]' ? [partner] : [],
         createElement: tag => ({ tag, hidden: false, setAttribute() {}, querySelector: selector => buttons[selector] || buttons['[data-allow]'] }),
         addEventListener: (type, listener) => { (documentListeners[type] ||= []).push(listener); },
         dispatchEvent: event => { (documentListeners[event.type] || []).forEach(listener => listener(event)); }
@@ -39,7 +40,7 @@ function boot({ saved, hostname = 'airportguideapp.com', guide, brokenStorage = 
     const context = { window, document, location, localStorage, URL, Date, Event };
     runInNewContext(script, context);
     if (loadPartners) runInNewContext(readFileSync(join(__dirname, '../assets/partner-links.js'), 'utf8'), context);
-    return { window, banner, handlers, externalScripts, storage, internal, hubLink, jfkLink, external, cookieWrites,
+    return { window, banner, handlers, externalScripts, storage, internal, hubLink, jfkLink, istanbulLink, external, cookieWrites,
         events: () => (window.dataLayer || []).map(args => Array.from(args)).filter(args => args[0] === 'event'),
         commands: () => (window.dataLayer || []).map(args => Array.from(args)),
         reloads: () => reloads, partner, clickPartner() { document.dispatchEvent({ type: 'click', target: { closest: () => partner } }); } };
@@ -84,7 +85,7 @@ test('page and event data exclude flight, booking and click identifiers', () => 
 
 test('internal navigation retains campaign labels across all guide routes without copying flight or unique IDs', () => {
     const app = boot();
-    for (const targetLink of [app.internal, app.hubLink, app.jfkLink]) {
+    for (const targetLink of [app.internal, app.hubLink, app.jfkLink, app.istanbulLink]) {
         const url = new URL(targetLink.href);
         assert.equal(url.searchParams.get('utm_campaign'), 'dubai_arrivals_test');
         assert.equal(url.searchParams.get('utm_source'), 'google');
@@ -162,6 +163,10 @@ test('all public pages use the same loader without an unconditional Google or Dr
         'guides/jfk/index.html',
         'guides/bangkok/index.html',
         'guides/tokyo/index.html',
+        'guides/istanbul/index.html',
+        'guides/cancun/index.html',
+        'guides/marrakech/index.html',
+        'guides/antalya/index.html',
         'about/index.html',
         'privacy/index.html'
     ]) {

@@ -21,7 +21,7 @@
     <script src="tz-lookup.min.js"></script>
     <link rel="stylesheet" href="/assets/analytics.css?v=20261106-affiliates">
     <script src="/assets/analytics.js?v=20261122-guides" defer></script>
-    <script src="/assets/partner-links.js?v=20261122-guides" defer></script>
+    <script src="/assets/partner-links.js?v=20261122-wave2" defer></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
         body {
@@ -177,7 +177,7 @@
         <div class="mt-8 w-full space-y-2.5">
             <div class="flex items-center justify-between px-1">
                 <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Airport Arrival Guides</span>
-                <a href="/guides/" data-guide-link data-guide="hub" data-placement="search" class="text-[11px] font-bold text-indigo-300 hover:text-indigo-200">All guides →</a>
+                <a href="/guides/" data-guide-link data-guide="hub" data-placement="search" class="text-[11px] font-bold text-indigo-300 hover:text-indigo-200">All 8 guides →</a>
             </div>
             <a id="frontDubaiGuide" href="/guides/dubai/" data-guide-link data-placement="search" data-guide="dubai" class="flex w-full items-center gap-3.5 rounded-2xl border border-indigo-500/25 bg-indigo-950/25 px-4 py-3.5 text-left transition-all hover:border-indigo-400/50 hover:bg-indigo-950/45 group">
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-lg text-indigo-300">
@@ -192,7 +192,7 @@
                 </span>
                 <span class="text-indigo-300 font-bold transition-transform group-hover:translate-x-0.5" aria-hidden="true">→</span>
             </a>
-            <div class="grid grid-cols-3 gap-2">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <a href="/guides/jfk/" data-guide-link data-guide="jfk" data-placement="search" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left transition-colors hover:border-indigo-400/45 hover:bg-indigo-950/35">
                     <span class="block text-xs font-bold text-slate-100">New York · JFK</span>
                     <span class="mt-0.5 block text-[10px] text-slate-400">AirTrain, cab &amp; eSIM</span>
@@ -204,6 +204,26 @@
                 <a href="/guides/tokyo/" data-guide-link data-guide="tokyo" data-placement="search" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left transition-colors hover:border-indigo-400/45 hover:bg-indigo-950/35">
                     <span class="block text-xs font-bold text-slate-100">Tokyo · HND/NRT</span>
                     <span class="mt-0.5 block text-[10px] text-slate-400">Trains &amp; Japan eSIM</span>
+                </a>
+                <a href="/guides/istanbul/" data-guide-link data-guide="istanbul" data-placement="search" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left transition-colors hover:border-indigo-400/45 hover:bg-indigo-950/35">
+                    <span class="block text-xs font-bold text-slate-100">Istanbul · IST/SAW</span>
+                    <span class="mt-0.5 block text-[10px] text-slate-400">M11/M4, Havaist &amp; eSIM</span>
+                </a>
+                <a href="/guides/cancun/" data-guide-link data-guide="cancun" data-placement="search" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left transition-colors hover:border-indigo-400/45 hover:bg-indigo-950/35">
+                    <span class="block text-xs font-bold text-slate-100">Cancún · CUN</span>
+                    <span class="mt-0.5 block text-[10px] text-slate-400">ADO bus &amp; resort transfer</span>
+                </a>
+                <a href="/guides/marrakech/" data-guide-link data-guide="marrakech" data-placement="search" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left transition-colors hover:border-indigo-400/45 hover:bg-indigo-950/35">
+                    <span class="block text-xs font-bold text-slate-100">Marrakech · RAK</span>
+                    <span class="mt-0.5 block text-[10px] text-slate-400">Bus 19, Riad gate &amp; eSIM</span>
+                </a>
+                <a href="/guides/antalya/" data-guide-link data-guide="antalya" data-placement="search" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left transition-colors hover:border-indigo-400/45 hover:bg-indigo-950/35">
+                    <span class="block text-xs font-bold text-slate-100">Antalya · AYT</span>
+                    <span class="mt-0.5 block text-[10px] text-slate-400">T1 tram, T2 &amp; coast</span>
+                </a>
+                <a href="/guides/" data-guide-link data-guide="hub" data-placement="search" class="rounded-xl border border-indigo-500/20 bg-indigo-950/20 px-3 py-2.5 text-left transition-colors hover:border-indigo-400/45 hover:bg-indigo-950/40">
+                    <span class="block text-xs font-bold text-indigo-300">Guides Hub →</span>
+                    <span class="mt-0.5 block text-[10px] text-slate-400">All 8 airports &amp; FAQs</span>
                 </a>
             </div>
         </div>
@@ -928,6 +948,36 @@
                     badge: 'Tokyo (HND/NRT) · Live Arrival Tracker',
                     subtitle: 'Flying to Tokyo (Haneda HND or Narita NRT)? Enter your flight number for live airport, terminal & delay status.',
                     placeholder: 'E.g. BA7, JL44 or NH212'
+                },
+                IST: {
+                    airport: 'IST',
+                    badge: 'Istanbul (IST) · Live Arrival Tracker',
+                    subtitle: 'Flying to Istanbul Airport (IST)? Enter your flight number for live terminal, gate, belt & delay status.',
+                    placeholder: 'E.g. TK1980, BA676 or TK1986'
+                },
+                SAW: {
+                    airport: 'SAW',
+                    badge: 'Istanbul Sabiha Gökçen (SAW) · Live Arrival Tracker',
+                    subtitle: 'Flying to Istanbul Sabiha Gökçen (SAW)? Enter your flight number for live terminal, gate & delay status.',
+                    placeholder: 'E.g. PC1162, PC1180 or VF302'
+                },
+                CUN: {
+                    airport: 'CUN',
+                    badge: 'Cancún (CUN) · Live Arrival Tracker',
+                    subtitle: 'Flying to Cancún (CUN)? Enter your flight number for live Terminal 2–4, gate & delay status.',
+                    placeholder: 'E.g. BA2203, VS93 or AF650'
+                },
+                RAK: {
+                    airport: 'RAK',
+                    badge: 'Marrakech (RAK) · Live Arrival Tracker',
+                    subtitle: 'Flying to Marrakech Menara (RAK)? Enter your flight number for live terminal, gate & delay status.',
+                    placeholder: 'E.g. BA2662, EZY8891 or FR3722'
+                },
+                AYT: {
+                    airport: 'AYT',
+                    badge: 'Antalya (AYT) · Live Arrival Tracker',
+                    subtitle: 'Flying to Antalya (AYT)? Enter your flight number for live Terminal 1–2, gate & delay status.',
+                    placeholder: 'E.g. BA2774, EZY8941 or XQ505'
                 }
             };
             const ctx = DEST_CONTEXT[code];
@@ -1270,6 +1320,76 @@
                     taxiBadge: 'NRT · Fixed quote',
                     taxiDesc: 'Landing after the last N’EX (~21:44) or Skyliner (~22:30)? Pre-book a fixed-price vehicle from Narita instead of high metered long-distance cab fares.',
                     taxiCta: 'See fixed Tokyo transfer prices'
+                },
+                IST: {
+                    guide: 'istanbul',
+                    href: '/guides/istanbul/',
+                    title: 'Arriving at Istanbul (IST)?',
+                    subtitle: 'European-side M11 Metro, 24/7 Havaist coaches & Turkey eSIM.',
+                    esimTitle: 'Turkey eSIM for Istanbul Arrival',
+                    esimBadge: 'IST · Turkey Data',
+                    esimDesc: 'Have data ready at IST for BiTaksi/Uber, Istanbulkart transit apps and maps on the European side. Check roaming or compare instant Turkey eSIM plans.',
+                    esimCta: 'Check Turkey eSIM plans',
+                    taxiTitle: 'IST Transfer to Central Istanbul',
+                    taxiBadge: 'IST · Fixed quote',
+                    taxiDesc: 'Avoid long luggage walks to coach bays or Bosphorus traffic meter guesswork — pre-book an upfront fixed-price transfer from Istanbul Airport.',
+                    taxiCta: 'See fixed Istanbul transfer prices'
+                },
+                SAW: {
+                    guide: 'istanbul',
+                    href: '/guides/istanbul/',
+                    title: 'Arriving at Istanbul Sabiha Gökçen (SAW)?',
+                    subtitle: 'Asian-side M4 Metro + Marmaray, bridge transfers & Turkey eSIM.',
+                    esimTitle: 'Turkey eSIM for Istanbul Arrival',
+                    esimBadge: 'SAW · Turkey Data',
+                    esimDesc: 'Sabiha Gökçen sits on Istanbul’s Asian side — keep live mobile data ready for M4/Marmaray transfers, hotel directions and rides across the Bosphorus.',
+                    esimCta: 'Check Turkey eSIM plans',
+                    taxiTitle: 'SAW Transfer to Central Istanbul',
+                    taxiBadge: 'SAW · Fixed quote',
+                    taxiDesc: 'Heading to Sultanahmet, Taksim or Besiktas late at night? Pre-book a fixed-price transfer from SAW instead of negotiating highway and bridge tolls.',
+                    taxiCta: 'See fixed Istanbul transfer prices'
+                },
+                CUN: {
+                    guide: 'cancun',
+                    href: '/guides/cancun/',
+                    title: 'Arriving at Cancún (CUN)?',
+                    subtitle: 'Terminals 2–4, ADO buses, Uber pickup ban & Mexico eSIM.',
+                    esimTitle: 'Mexico eSIM for Cancún Arrival',
+                    esimBadge: 'CUN · Mexico Data',
+                    esimDesc: 'Stay connected as you walk past indoor timeshare desks out to ADO bays and hotel pickup zones — check roaming or compare instant Mexico eSIM plans.',
+                    esimCta: 'Check Mexico eSIM plans',
+                    taxiTitle: 'CUN Transfer to Your Resort',
+                    taxiBadge: 'CUN · Fixed quote',
+                    taxiDesc: 'Uber cannot pick up at Cancún terminals and walk-up cabs cost more. Pre-book a fixed-price vehicle to Hotel Zone, Playa del Carmen or Tulum.',
+                    taxiCta: 'See fixed Cancún transfer prices'
+                },
+                RAK: {
+                    guide: 'marrakech',
+                    href: '/guides/marrakech/',
+                    title: 'Arriving at Marrakech (RAK)?',
+                    subtitle: 'ALSA Bus 19, Medina Riad gate drops & Morocco eSIM.',
+                    esimTitle: 'Morocco eSIM for Marrakech Arrival',
+                    esimBadge: 'RAK · Morocco Data',
+                    esimDesc: 'Marrakech has no airport train and Medina alleys restrict cars — keep mobile data ready to message your Riad host or navigate from the nearest gate.',
+                    esimCta: 'Check Morocco eSIM plans',
+                    taxiTitle: 'RAK Transfer to Your Riad or Hotel',
+                    taxiBadge: 'RAK · Fixed quote',
+                    taxiDesc: 'Skip cash exchange queues and late-night tariff negotiations. Pre-book a fixed-price pickup that coordinates directly with your Medina gate or hotel.',
+                    taxiCta: 'See fixed Marrakech transfer prices'
+                },
+                AYT: {
+                    guide: 'antalya',
+                    href: '/guides/antalya/',
+                    title: 'Arriving at Antalya (AYT)?',
+                    subtitle: 'T1 AntRay tram vs. T2 shuttle, resort transfers & Turkey eSIM.',
+                    esimTitle: 'Turkey eSIM for Antalya Arrival',
+                    esimBadge: 'AYT · Turkey Data',
+                    esimDesc: 'Keep data working from Antalya T1 or T2 for resort directions, driver WhatsApp meetups and coastal travel to Lara, Belek, Side or Alanya.',
+                    esimCta: 'Check Turkey eSIM plans',
+                    taxiTitle: 'AYT Resort Transfer (Lara/Belek/Side)',
+                    taxiBadge: 'AYT · Fixed quote',
+                    taxiDesc: 'Terminal 2 has no direct tram stop and Belek, Side and Alanya sit 45–120 minutes away. Compare an upfront fixed-price resort transfer.',
+                    taxiCta: 'See fixed Antalya transfer prices'
                 }
             };
             const guideInfo = ARRIVAL_GUIDES[f.arr_iata];
