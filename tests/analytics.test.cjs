@@ -16,6 +16,8 @@ function boot({ saved, hostname = 'airportguideapp.com', guide, brokenStorage = 
     let banner;
     const buttons = Object.fromEntries(['[data-allow]', '[data-decline]'].map(name => [name, { addEventListener: (event, fn) => { handlers[name] = fn; }, focus() {} }]));
     const internal = { href: '/guides/dubai/', getAttribute() { return '/guides/dubai/'; } };
+    const hubLink = { href: '/guides/', getAttribute() { return '/guides/'; } };
+    const jfkLink = { href: '/guides/jfk/', getAttribute() { return '/guides/jfk/'; } };
     const external = { href: 'https://www.airalo.com/', getAttribute() { return this.href; } };
     const partner = { href: 'https://airalo.pxf.io/2RKYkg', dataset: { provider: 'airalo', placement: 'dubai_guide' },
         getAttribute() { return this.href; }, hasAttribute() { return false; } };
@@ -26,7 +28,7 @@ function boot({ saved, hostname = 'airportguideapp.com', guide, brokenStorage = 
         head: { appendChild: element => externalScripts.push(element.src) },
         referrer: 'https://example.com/ref?booking_ref=PRIVATE-REFERRER',
         activeElement: { focus() {} },
-        querySelectorAll: selector => selector === 'a[href]' ? [internal, external, partner] : selector === 'a[data-provider]' ? [partner] : [],
+        querySelectorAll: selector => selector === 'a[href]' ? [internal, hubLink, jfkLink, external, partner] : selector === 'a[data-provider]' ? [partner] : [],
         createElement: tag => ({ tag, hidden: false, setAttribute() {}, querySelector: selector => buttons[selector] || buttons['[data-allow]'] }),
         addEventListener: (type, listener) => { (documentListeners[type] ||= []).push(listener); },
         dispatchEvent: event => { (documentListeners[event.type] || []).forEach(listener => listener(event)); }
@@ -37,7 +39,7 @@ function boot({ saved, hostname = 'airportguideapp.com', guide, brokenStorage = 
     const context = { window, document, location, localStorage, URL, Date, Event };
     runInNewContext(script, context);
     if (loadPartners) runInNewContext(readFileSync(join(__dirname, '../assets/partner-links.js'), 'utf8'), context);
-    return { window, banner, handlers, externalScripts, storage, internal, external, cookieWrites,
+    return { window, banner, handlers, externalScripts, storage, internal, hubLink, jfkLink, external, cookieWrites,
         events: () => (window.dataLayer || []).map(args => Array.from(args)).filter(args => args[0] === 'event'),
         commands: () => (window.dataLayer || []).map(args => Array.from(args)),
         reloads: () => reloads, partner, clickPartner() { document.dispatchEvent({ type: 'click', target: { closest: () => partner } }); } };
@@ -80,13 +82,15 @@ test('page and event data exclude flight, booking and click identifiers', () => 
     assert.equal(app.events().find(event => event[1] === 'flight_search_success')[2].arrival_airport, 'DXB');
 });
 
-test('internal navigation retains campaign labels without copying flight or unique IDs', () => {
+test('internal navigation retains campaign labels across all guide routes without copying flight or unique IDs', () => {
     const app = boot();
-    const url = new URL(app.internal.href);
-    assert.equal(url.searchParams.get('utm_campaign'), 'dubai_arrivals_test');
-    assert.equal(url.searchParams.get('utm_source'), 'google');
-    assert.equal(url.searchParams.has('flight'), false);
-    assert.equal(url.searchParams.has('gclid'), false);
+    for (const targetLink of [app.internal, app.hubLink, app.jfkLink]) {
+        const url = new URL(targetLink.href);
+        assert.equal(url.searchParams.get('utm_campaign'), 'dubai_arrivals_test');
+        assert.equal(url.searchParams.get('utm_source'), 'google');
+        assert.equal(url.searchParams.has('flight'), false);
+        assert.equal(url.searchParams.has('gclid'), false);
+    }
     assert.equal(app.external.href, 'https://www.airalo.com/');
 });
 
@@ -100,11 +104,19 @@ test('declining analytics preserves site use without loading Google', () => {
     assert.equal(app.banner.hidden, false);
 });
 
-test('returning consenting visitors get one Dubai guide view', () => {
-    const app = boot({ saved: { allowed: true, at: Date.now() }, guide: 'dubai' });
-    assert.equal(app.externalScripts.length, 1);
-    assert.equal(app.events().filter(event => event[1] === 'destination_guide_view').length, 1);
-    assert.equal(app.banner.hidden, true);
+test('returning consenting visitors get one destination_guide_view for individual guides and none on non-guide pages', () => {
+    const dubai = boot({ saved: { allowed: true, at: Date.now() }, guide: 'dubai' });
+    assert.equal(dubai.externalScripts.length, 1);
+    assert.equal(dubai.events().filter(event => event[1] === 'destination_guide_view').length, 1);
+    assert.equal(dubai.banner.hidden, true);
+
+    const jfk = boot({ saved: { allowed: true, at: Date.now() }, guide: 'jfk' });
+    const jfkViews = jfk.events().filter(event => event[1] === 'destination_guide_view');
+    assert.equal(jfkViews.length, 1);
+    assert.equal(jfkViews[0][2].guide, 'jfk');
+
+    const hub = boot({ saved: { allowed: true, at: Date.now() } });
+    assert.equal(hub.events().filter(event => event[1] === 'destination_guide_view').length, 0);
 });
 
 test('expired consent does not start analytics', () => {
@@ -143,7 +155,16 @@ test('partner clicks cannot masquerade as purchases or revenue', () => {
 });
 
 test('all public pages use the same loader without an unconditional Google or Drive tag', () => {
-    for (const path of ['index.html', 'guides/dubai/index.html', 'about/index.html', 'privacy/index.html']) {
+    for (const path of [
+        'index.html',
+        'guides/index.html',
+        'guides/dubai/index.html',
+        'guides/jfk/index.html',
+        'guides/bangkok/index.html',
+        'guides/tokyo/index.html',
+        'about/index.html',
+        'privacy/index.html'
+    ]) {
         const html = readFileSync(join(__dirname, '..', path), 'utf8');
         assert.match(html, /src="\/assets\/analytics\.js(?:\?v=[a-z0-9-]+)?"/);
         assert.doesNotMatch(html, /<script[^>]+src="https:\/\/www\.googletagmanager/);

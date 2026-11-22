@@ -15,9 +15,10 @@
     // owner's programs have approved airportguideapp.com. Empty means use the
     // existing generic link, not an invented publisher ID or deep link.
     const dubaiLinks = Object.freeze({ airalo: 'https://airalo.pxf.io/KB66v9', kiwitaxi: 'https://kiwitaxi.tpo.mx/RyxrAcPa', viator: '' });
+    const destinationLinks = Object.freeze({ DXB: dubaiLinks });
 
     function subId(context = {}) {
-        const placement = ['dubai_guide', 'flight_result'].includes(context.placement) ? context.placement : 'site';
+        const placement = ['dubai_guide', 'jfk_guide', 'bangkok_guide', 'tokyo_guide', 'guides_hub', 'flight_result'].includes(context.placement) ? context.placement : 'site';
         const airport = /^[A-Z]{3}$/.test(context.airport || '') ? context.airport.toLowerCase() : 'general';
         // Only the named campaign is exported to partner reporting. Visitors'
         // arbitrary URL parameters and unique identifiers never go here.
@@ -93,7 +94,8 @@
         if (context.airport) document.body.dataset.arrivalAirport = context.airport;
         document.querySelectorAll('a[data-provider]').forEach(link => {
             const airport = document.body.dataset.arrivalAirport || '';
-            const configured = airport === 'DXB' ? Object.fromEntries(Object.entries(links).map(([provider, url]) => [provider, dubaiLinks[provider] || url])) : links;
+            const perAirport = destinationLinks[airport];
+            const configured = perAirport ? Object.fromEntries(Object.entries(links).map(([provider, url]) => [provider, perAirport[provider] || url])) : links;
             const offer = resolve(link.dataset.provider, link.dataset.destination || '', configured, {
                 airport, placement: link.dataset.placement,
                 campaign: window.AirportGuideAnalytics?.campaign?.utm_campaign || ''
@@ -127,7 +129,8 @@
         const link = event.target.closest('a');
         if (!link) return;
         if (link.hasAttribute('data-guide-link')) {
-            report('destination_guide_click', { guide: 'dubai', placement: link.dataset.placement || 'unknown' });
+            const guide = /^[a-z0-9_-]{1,40}$/i.test(link.dataset.guide || '') ? link.dataset.guide : 'dubai';
+            report('destination_guide_click', { guide, placement: link.dataset.placement || 'unknown' });
         }
         if (!link.dataset.provider) return;
         const params = parameters(link);

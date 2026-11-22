@@ -20,8 +20,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="tz-lookup.min.js"></script>
     <link rel="stylesheet" href="/assets/analytics.css?v=20261106-affiliates">
-    <script src="/assets/analytics.js?v=20261119-ga4" defer></script>
-    <script src="/assets/partner-links.js?v=20261106-dubai-partners" defer></script>
+    <script src="/assets/analytics.js?v=20261122-guides" defer></script>
+    <script src="/assets/partner-links.js?v=20261122-guides" defer></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
         body {
@@ -174,8 +174,12 @@
 
         <div id="recentSearches" class="w-full mt-6 flex flex-wrap justify-center gap-2 hidden fade-in"></div>
 
-        <div class="mt-8 w-full">
-            <a id="frontDubaiGuide" href="/guides/dubai/" data-guide-link data-placement="search" class="flex w-full items-center gap-3.5 rounded-2xl border border-indigo-500/25 bg-indigo-950/25 px-4 py-3.5 text-left transition-all hover:border-indigo-400/50 hover:bg-indigo-950/45 group">
+        <div class="mt-8 w-full space-y-2.5">
+            <div class="flex items-center justify-between px-1">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Airport Arrival Guides</span>
+                <a href="/guides/" data-guide-link data-guide="hub" data-placement="search" class="text-[11px] font-bold text-indigo-300 hover:text-indigo-200">All guides →</a>
+            </div>
+            <a id="frontDubaiGuide" href="/guides/dubai/" data-guide-link data-placement="search" data-guide="dubai" class="flex w-full items-center gap-3.5 rounded-2xl border border-indigo-500/25 bg-indigo-950/25 px-4 py-3.5 text-left transition-all hover:border-indigo-400/50 hover:bg-indigo-950/45 group">
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-lg text-indigo-300">
                     <i class="fas fa-map-location-dot" aria-hidden="true"></i>
                 </span>
@@ -188,6 +192,20 @@
                 </span>
                 <span class="text-indigo-300 font-bold transition-transform group-hover:translate-x-0.5" aria-hidden="true">→</span>
             </a>
+            <div class="grid grid-cols-3 gap-2">
+                <a href="/guides/jfk/" data-guide-link data-guide="jfk" data-placement="search" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left transition-colors hover:border-indigo-400/45 hover:bg-indigo-950/35">
+                    <span class="block text-xs font-bold text-slate-100">New York · JFK</span>
+                    <span class="mt-0.5 block text-[10px] text-slate-400">AirTrain, cab &amp; eSIM</span>
+                </a>
+                <a href="/guides/bangkok/" data-guide-link data-guide="bangkok" data-placement="search" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left transition-colors hover:border-indigo-400/45 hover:bg-indigo-950/35">
+                    <span class="block text-xs font-bold text-slate-100">Bangkok · BKK</span>
+                    <span class="mt-0.5 block text-[10px] text-slate-400">SAT-1, rail &amp; taxi</span>
+                </a>
+                <a href="/guides/tokyo/" data-guide-link data-guide="tokyo" data-placement="search" class="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left transition-colors hover:border-indigo-400/45 hover:bg-indigo-950/35">
+                    <span class="block text-xs font-bold text-slate-100">Tokyo · HND/NRT</span>
+                    <span class="mt-0.5 block text-[10px] text-slate-400">Trains &amp; Japan eSIM</span>
+                </a>
+            </div>
         </div>
 
         <div class="mt-8 max-w-sm mx-auto text-center px-4 pb-6">
@@ -385,9 +403,9 @@
                     </div>
                 </div>
 
-                <a id="arrivalGuide" href="/guides/dubai/" data-guide-link data-placement="flight_result" class="hidden flex items-center gap-3 rounded-2xl border border-slate-700 bg-slate-800/50 p-4 hover:border-indigo-400/60">
+                <a id="arrivalGuide" href="/guides/dubai/" data-guide-link data-guide="dubai" data-placement="flight_result" class="hidden flex items-center gap-3 rounded-2xl border border-slate-700 bg-slate-800/50 p-4 hover:border-indigo-400/60">
                     <i class="fas fa-map-location-dot text-xl text-indigo-300" aria-hidden="true"></i>
-                    <span class="flex-1"><span class="block text-sm font-bold text-white">Arriving in Dubai (DXB)?</span><span class="block mt-1 text-xs text-slate-400">Terminals 1–3, Metro vs. taxi &amp; first steps at DXB.</span></span>
+                    <span class="flex-1"><span id="arrivalGuideTitle" class="block text-sm font-bold text-white">Arriving in Dubai (DXB)?</span><span id="arrivalGuideSubtitle" class="block mt-1 text-xs text-slate-400">Terminals 1–3, Metro vs. taxi &amp; first steps at DXB.</span></span>
                     <span class="text-indigo-300" aria-hidden="true">→</span>
                 </a>
 
@@ -428,7 +446,7 @@
     <footer class="ag-privacy-footer w-full max-w-md pt-6 pb-2 px-4 text-center">
         <div class="text-[11px] text-slate-500 mb-1.5">Airport Guide · Independent live flight status &amp; arrival help</div>
         <nav aria-label="Footer" class="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-xs text-slate-400">
-            <a href="/guides/dubai/" data-guide-link data-placement="footer">Dubai Guide</a>
+            <a href="/guides/" data-guide-link data-guide="hub" data-placement="footer">Arrival Guides</a>
             <span aria-hidden="true">·</span>
             <a href="/about/">About</a>
             <span aria-hidden="true">·</span>
@@ -874,15 +892,57 @@
 
         function applyDestinationContext(dest) {
             const code = String(dest || '').trim().toUpperCase();
+            const DEST_CONTEXT = {
+                DXB: {
+                    airport: 'DXB',
+                    badge: 'Dubai (DXB) · Live Arrival Tracker',
+                    subtitle: 'Flying to Dubai (DXB)? Enter your flight number for live Terminal 1–3, gate, baggage belt & delay status.',
+                    placeholder: 'E.g. EK002, BA107 or EK032'
+                },
+                JFK: {
+                    airport: 'JFK',
+                    badge: 'New York (JFK) · Live Arrival Tracker',
+                    subtitle: 'Flying to New York (JFK)? Enter your flight number for live terminal, gate & delay status.',
+                    placeholder: 'E.g. BA175, VS3 or AA101'
+                },
+                BKK: {
+                    airport: 'BKK',
+                    badge: 'Bangkok (BKK) · Live Arrival Tracker',
+                    subtitle: 'Flying to Bangkok (BKK)? Enter your flight number for live terminal, gate, belt & delay status.',
+                    placeholder: 'E.g. TG911, BR68 or EK372'
+                },
+                HND: {
+                    airport: 'TYO',
+                    badge: 'Tokyo Haneda (HND) · Live Arrival Tracker',
+                    subtitle: 'Flying to Tokyo Haneda (HND)? Enter your flight number for live terminal, gate & delay status.',
+                    placeholder: 'E.g. BA7, JL44 or NH212'
+                },
+                NRT: {
+                    airport: 'TYO',
+                    badge: 'Tokyo Narita (NRT) · Live Arrival Tracker',
+                    subtitle: 'Flying to Tokyo Narita (NRT)? Enter your flight number for live terminal, gate & delay status.',
+                    placeholder: 'E.g. NRT arrivals or JL44'
+                },
+                TYO: {
+                    airport: 'TYO',
+                    badge: 'Tokyo (HND/NRT) · Live Arrival Tracker',
+                    subtitle: 'Flying to Tokyo (Haneda HND or Narita NRT)? Enter your flight number for live airport, terminal & delay status.',
+                    placeholder: 'E.g. BA7, JL44 or NH212'
+                }
+            };
+            const ctx = DEST_CONTEXT[code];
             const badgeEl = document.getElementById('searchBadgeText');
             const subtitleEl = document.getElementById('searchSubtitle');
             const guideEl = document.getElementById('frontDubaiGuide');
-            if (code === 'DXB') {
-                document.body.dataset.arrivalAirport = 'DXB';
-                if (badgeEl) badgeEl.textContent = 'Dubai (DXB) · Live Arrival Tracker';
-                if (subtitleEl) subtitleEl.textContent = 'Flying to Dubai (DXB)? Enter your flight number for live Terminal 1–3, gate, baggage belt & delay status.';
-                flightInput.placeholder = 'E.g. EK002, BA107 or EK032';
-                if (guideEl) guideEl.classList.add('border-indigo-400/60', 'bg-indigo-950/45');
+            if (ctx) {
+                document.body.dataset.arrivalAirport = ctx.airport;
+                if (badgeEl) badgeEl.textContent = ctx.badge;
+                if (subtitleEl) subtitleEl.textContent = ctx.subtitle;
+                flightInput.placeholder = ctx.placeholder;
+                if (guideEl) {
+                    guideEl.classList.toggle('border-indigo-400/60', code === 'DXB');
+                    guideEl.classList.toggle('bg-indigo-950/45', code === 'DXB');
+                }
             } else {
                 delete document.body.dataset.arrivalAirport;
                 if (badgeEl) badgeEl.textContent = 'Airport Guide · Live data';
@@ -1140,8 +1200,90 @@
                 if(card) card.classList.add('hidden');
             });
 
-            const isDxb = f.arr_iata === 'DXB';
-            if (arrivalGuide) arrivalGuide.classList.toggle('hidden', !isDxb);
+            const ARRIVAL_GUIDES = {
+                DXB: {
+                    guide: 'dubai',
+                    href: '/guides/dubai/',
+                    title: 'Arriving in Dubai (DXB)?',
+                    subtitle: 'Terminals 1–3, Metro vs. taxi & first steps at DXB.',
+                    esimTitle: 'UAE eSIM for Dubai Arrival',
+                    esimBadge: 'DXB · UAE Data',
+                    esimDesc: 'DXB terminal Wi-Fi covers baggage claim, but mobile data helps as soon as you step out for the Metro, taxi or your hotel. Check your UAE roaming first or compare instant eSIM plans.',
+                    esimCta: 'Check UAE eSIM plans',
+                    taxiTitle: 'DXB Transfer to Your Hotel',
+                    taxiBadge: 'DXB · Fixed quote',
+                    taxiDesc: 'Skip the DXB arrival taxi queue — helpful at Terminal 2, late at night or with luggage. Drivers track your flight and meet you in Arrivals at a fixed price.',
+                    taxiCta: 'See fixed DXB taxi prices'
+                },
+                JFK: {
+                    guide: 'jfk',
+                    href: '/guides/jfk/',
+                    title: 'Arriving at New York (JFK)?',
+                    subtitle: 'Terminals 1–8, AirTrain vs. flat-fare yellow cab & US eSIM.',
+                    esimTitle: 'US eSIM for New York Arrival',
+                    esimBadge: 'JFK · US Data',
+                    esimDesc: 'JFK Wi-Fi helps at Arrivals, while US mobile data keeps Subway, LIRR and ride pickups smooth once you step outside. Check US roaming or compare travel eSIMs.',
+                    esimCta: 'Check US eSIM plans',
+                    taxiTitle: 'JFK Transfer to Manhattan',
+                    taxiBadge: 'JFK · Fixed quote',
+                    taxiDesc: 'Yellow cabs to Manhattan carry a $70 base flat fare plus tolls, surcharges and tip — compare an upfront fixed-price private pickup with flight tracking.',
+                    taxiCta: 'See fixed JFK transfer prices'
+                },
+                BKK: {
+                    guide: 'bangkok',
+                    href: '/guides/bangkok/',
+                    title: 'Arriving at Bangkok (BKK)?',
+                    subtitle: 'SAT-1 APM shuttle, Airport Rail Link hours & Level 1 taxis.',
+                    esimTitle: 'Thailand eSIM for Bangkok Arrival',
+                    esimBadge: 'BKK · Thailand Data',
+                    esimDesc: 'Mobile data is essential outside BKK Arrivals for Grab, hotel directions in Thai script and maps. Check Thailand roaming first or compare instant eSIM plans.',
+                    esimCta: 'Check Thailand eSIM plans',
+                    taxiTitle: 'BKK Transfer to Your Hotel',
+                    taxiBadge: 'BKK · Fixed quote',
+                    taxiDesc: 'Avoid late-night waits after the Airport Rail Link closes (~00:00) or expressway toll cash queues. Pre-book an upfront fixed-price pickup from BKK Arrivals.',
+                    taxiCta: 'See fixed BKK taxi prices'
+                },
+                HND: {
+                    guide: 'tokyo',
+                    href: '/guides/tokyo/',
+                    title: 'Arriving at Tokyo Haneda (HND)?',
+                    subtitle: 'Terminal 3 Keikyu & Monorail hours, transfers & Japan eSIM.',
+                    esimTitle: 'Japan eSIM for Tokyo Arrival',
+                    esimBadge: 'HND · Japan Data',
+                    esimDesc: 'Have mobile data ready at Haneda for Visit Japan Web QR codes, train platforms and Google Maps. Check Japan roaming or compare instant travel eSIMs.',
+                    esimCta: 'Check Japan eSIM plans',
+                    taxiTitle: 'Haneda (HND) Hotel Transfer',
+                    taxiBadge: 'HND · Fixed quote',
+                    taxiDesc: 'Skip late-night train cutoffs after midnight or multi-level station stairs with heavy suitcases. Drivers track your flight from Haneda Arrivals.',
+                    taxiCta: 'See fixed Tokyo transfer prices'
+                },
+                NRT: {
+                    guide: 'tokyo',
+                    href: '/guides/tokyo/',
+                    title: 'Arriving at Tokyo Narita (NRT)?',
+                    subtitle: 'Skyliner & N’EX last-train cutoffs, T3 shuttle & Japan eSIM.',
+                    esimTitle: 'Japan eSIM for Tokyo Arrival',
+                    esimBadge: 'NRT · Japan Data',
+                    esimDesc: 'Narita sits ~60 km outside central Tokyo — keep live data ready for Skyliner/N’EX connections and Visit Japan Web. Compare instant Japan eSIM plans.',
+                    esimCta: 'Check Japan eSIM plans',
+                    taxiTitle: 'Narita (NRT) Transfer to Tokyo',
+                    taxiBadge: 'NRT · Fixed quote',
+                    taxiDesc: 'Landing after the last N’EX (~21:44) or Skyliner (~22:30)? Pre-book a fixed-price vehicle from Narita instead of high metered long-distance cab fares.',
+                    taxiCta: 'See fixed Tokyo transfer prices'
+                }
+            };
+            const guideInfo = ARRIVAL_GUIDES[f.arr_iata];
+            if (arrivalGuide) {
+                arrivalGuide.classList.toggle('hidden', !guideInfo);
+                if (guideInfo) {
+                    arrivalGuide.href = guideInfo.href;
+                    arrivalGuide.dataset.guide = guideInfo.guide;
+                    const titleEl = document.getElementById('arrivalGuideTitle');
+                    const subEl = document.getElementById('arrivalGuideSubtitle');
+                    if (titleEl) titleEl.textContent = guideInfo.title;
+                    if (subEl) subEl.textContent = guideInfo.subtitle;
+                }
+            }
             const esimLocName = arrCountryName || arrCityName;
 
             const esimTitleEl = document.getElementById('esimTitle');
@@ -1153,16 +1295,16 @@
             const taxiDescEl = document.getElementById('taxiDesc');
             const taxiCtaTextEl = document.getElementById('taxiCtaText');
 
-            if (isDxb) {
-                if (esimTitleEl) esimTitleEl.textContent = 'UAE eSIM for Dubai Arrival';
-                if (esimBadgeEl) esimBadgeEl.textContent = 'DXB · UAE Data';
-                if (esimDescEl) esimDescEl.textContent = 'DXB terminal Wi-Fi covers baggage claim, but mobile data helps as soon as you step out for the Metro, taxi or your hotel. Check your UAE roaming first or compare instant eSIM plans.';
-                if (esimCtaTextEl) esimCtaTextEl.textContent = 'Check UAE eSIM plans';
+            if (guideInfo) {
+                if (esimTitleEl) esimTitleEl.textContent = guideInfo.esimTitle;
+                if (esimBadgeEl) esimBadgeEl.textContent = guideInfo.esimBadge;
+                if (esimDescEl) esimDescEl.textContent = guideInfo.esimDesc;
+                if (esimCtaTextEl) esimCtaTextEl.textContent = guideInfo.esimCta;
 
-                if (taxiTitleEl) taxiTitleEl.textContent = 'DXB Transfer to Your Hotel';
-                if (taxiBadgeEl) taxiBadgeEl.textContent = 'DXB · Fixed quote';
-                if (taxiDescEl) taxiDescEl.textContent = 'Skip the DXB arrival taxi queue — helpful at Terminal 2, late at night or with luggage. Drivers track your flight and meet you in Arrivals at a fixed price.';
-                if (taxiCtaTextEl) taxiCtaTextEl.textContent = 'See fixed DXB taxi prices';
+                if (taxiTitleEl) taxiTitleEl.textContent = guideInfo.taxiTitle;
+                if (taxiBadgeEl) taxiBadgeEl.textContent = guideInfo.taxiBadge;
+                if (taxiDescEl) taxiDescEl.textContent = guideInfo.taxiDesc;
+                if (taxiCtaTextEl) taxiCtaTextEl.textContent = guideInfo.taxiCta;
             } else {
                 if (esimTitleEl) esimTitleEl.textContent = `Mobile data · ${esimLocName}`;
                 if (esimBadgeEl) esimBadgeEl.textContent = 'Travel eSIM';

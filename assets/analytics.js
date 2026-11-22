@@ -60,7 +60,11 @@
         script.async = true;
         script.src = `https://www.googletagmanager.com/gtag/js?id=${MEASUREMENT_ID}`;
         document.head.appendChild(script);
-        if (document.body.dataset.guide === 'dubai') track('destination_guide_view', { guide: 'dubai', arrival_airport: 'DXB' });
+        const guide = document.body.dataset.guide;
+        if (guide && /^[a-z0-9_-]{1,40}$/i.test(guide)) {
+            const arrivalAirport = document.body.dataset.arrivalAirport || (guide === 'dubai' ? 'DXB' : '');
+            track('destination_guide_view', { guide, arrival_airport: arrivalAirport });
+        }
         document.dispatchEvent(new Event('airportguide:analytics-ready'));
     }
 
@@ -112,7 +116,7 @@
         document.querySelectorAll('a[href]').forEach(link => {
             try {
                 const url = new URL(link.getAttribute('href'), location.href);
-                if (url.origin !== location.origin || !['/', '/guides/dubai/'].includes(url.pathname)) return;
+                if (url.origin !== location.origin || (url.pathname !== '/' && url.pathname !== '/guides/' && !/^\/guides\/[a-z0-9-]+\/$/.test(url.pathname))) return;
                 if ((link.getAttribute('href') || '').startsWith('#')) return;
                 Object.entries(campaign).forEach(([key, value]) => url.searchParams.set(key, value));
                 link.href = url.href;

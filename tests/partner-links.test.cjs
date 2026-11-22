@@ -171,3 +171,39 @@ test('the UAE Airalo partner link renders for Dubai with attribution and resets 
     assert.equal(url.pathname, '/KB66v9');
     assert.equal(url.searchParams.get('subId1'), 'ag_flight_result_dxb_other');
 });
+
+test('new airport guides resolve generic verified links with guide-specific SubIDs', () => {
+    for (const [airport, placement, expectedSub] of [
+        ['JFK', 'jfk_guide', 'ag_jfk_guide_jfk_other'],
+        ['BKK', 'bangkok_guide', 'ag_bangkok_guide_bkk_other'],
+        ['TYO', 'tokyo_guide', 'ag_tokyo_guide_tyo_other'],
+        ['', 'guides_hub', 'ag_guides_hub_general_other']
+    ]) {
+        const airalo = { dataset: { provider: 'airalo', placement } };
+        const kiwitaxi = { dataset: { provider: 'kiwitaxi', placement } };
+        boot({ airport, anchors: [airalo, kiwitaxi] });
+        const aUrl = new URL(airalo.href);
+        const kUrl = new URL(kiwitaxi.href);
+        assert.equal(aUrl.origin + aUrl.pathname, 'https://airalo.pxf.io/2RKYkg');
+        assert.equal(aUrl.searchParams.get('subId1'), expectedSub);
+        assert.equal(airalo.rel, 'noopener sponsored');
+        assert.equal(kUrl.origin + kUrl.pathname, 'https://kiwitaxi.tpo.mx/dUq07Ia1');
+        assert.equal(kUrl.searchParams.get('sub_id'), expectedSub);
+        assert.equal(kiwitaxi.rel, 'noopener sponsored');
+    }
+});
+
+test('destination_guide_click reports specific guide slug or defaults cleanly to dubai', () => {
+    const events = [];
+    const { handlers } = boot({ gtag: (...event) => events.push(event) });
+    const jfkGuideLink = { dataset: { guide: 'jfk', placement: 'search' }, hasAttribute: name => name === 'data-guide-link' };
+    handlers.click({ type: 'click', target: { closest: () => jfkGuideLink } });
+    assert.equal(events[0][1], 'destination_guide_click');
+    assert.equal(events[0][2].guide, 'jfk');
+    assert.equal(events[0][2].placement, 'search');
+
+    const legacyLink = { dataset: { placement: 'footer' }, hasAttribute: name => name === 'data-guide-link' };
+    handlers.click({ type: 'click', target: { closest: () => legacyLink } });
+    assert.equal(events[1][2].guide, 'dubai');
+    assert.equal(events[1][2].placement, 'footer');
+});

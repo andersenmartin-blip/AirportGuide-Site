@@ -6,7 +6,11 @@ const assert = require('node:assert/strict');
 
 const root = join(__dirname, '..');
 const indexHtml = readFileSync(join(root, 'index.html'), 'utf8');
+const guidesHubHtml = readFileSync(join(root, 'guides/index.html'), 'utf8');
 const dubaiHtml = readFileSync(join(root, 'guides/dubai/index.html'), 'utf8');
+const jfkHtml = readFileSync(join(root, 'guides/jfk/index.html'), 'utf8');
+const bangkokHtml = readFileSync(join(root, 'guides/bangkok/index.html'), 'utf8');
+const tokyoHtml = readFileSync(join(root, 'guides/tokyo/index.html'), 'utf8');
 const aboutHtml = readFileSync(join(root, 'about/index.html'), 'utf8');
 const privacyHtml = readFileSync(join(root, 'privacy/index.html'), 'utf8');
 const sitemapXml = readFileSync(join(root, 'sitemap.xml'), 'utf8');
@@ -77,6 +81,10 @@ function bootPopulateCard() {
         airportDb: {
             LHR: { city: 'London', country: 'United Kingdom', lat: 51.47, lng: -0.45 },
             DXB: { city: 'Dubai', country: 'United Arab Emirates', lat: 25.25, lng: 55.36 },
+            JFK: { city: 'New York', country: 'United States', lat: 40.64, lng: -73.78 },
+            BKK: { city: 'Bangkok', country: 'Thailand', lat: 13.69, lng: 100.75 },
+            HND: { city: 'Tokyo', country: 'Japan', lat: 35.55, lng: 139.78 },
+            NRT: { city: 'Tokyo', country: 'Japan', lat: 35.76, lng: 140.39 },
             CPH: { city: 'Copenhagen', country: 'Denmark', lat: 55.61, lng: 12.65 }
         },
         getWeather() {},
@@ -222,6 +230,18 @@ test('dest=DXB context and resetSearch preserve campaign parameters while cleari
     assert.equal(replacedUrl, '/?dest=DXB&utm_source=google&utm_medium=cpc&utm_campaign=dubai_arrivals_test');
     assert.equal(document.body.dataset.arrivalAirport, 'DXB');
     assert.match(getEl('searchSubtitle').textContent, /Dubai \(DXB\)/);
+
+    window.applyDestinationContext('JFK');
+    assert.equal(document.body.dataset.arrivalAirport, 'JFK');
+    assert.match(getEl('searchSubtitle').textContent, /New York \(JFK\)/);
+
+    window.applyDestinationContext('BKK');
+    assert.equal(document.body.dataset.arrivalAirport, 'BKK');
+    assert.match(getEl('searchSubtitle').textContent, /Bangkok \(BKK\)/);
+
+    window.applyDestinationContext('TYO');
+    assert.equal(document.body.dataset.arrivalAirport, 'TYO');
+    assert.match(getEl('searchSubtitle').textContent, /Tokyo/);
 });
 
 test('Dubai guide embedded flight form normalizes flight numbers and preserves Google Ads campaign params', () => {
@@ -270,8 +290,9 @@ test('Dubai guide, front page, footer, boarding pass copy and sitemap meet Googl
     assert.match(indexHtml, /id="frontDubaiGuide"[^>]*href="\/guides\/dubai\/"[^>]*data-guide-link[^>]*data-placement="search"/);
     assert.match(indexHtml, /Processed 100% locally in your browser/);
 
-    // Footer links (About + Privacy) across all 4 public pages
-    for (const html of [indexHtml, dubaiHtml, aboutHtml, privacyHtml]) {
+    // Footer links (Arrival Guides + About + Privacy) across all 8 public pages
+    for (const html of [indexHtml, guidesHubHtml, dubaiHtml, jfkHtml, bangkokHtml, tokyoHtml, aboutHtml, privacyHtml]) {
+        assert.match(html, /href="\/guides\/"/);
         assert.match(html, /href="\/about\/"/);
         assert.match(html, /href="\/privacy\/"/);
     }
@@ -279,10 +300,99 @@ test('Dubai guide, front page, footer, boarding pass copy and sitemap meet Googl
     // Sitemap includes all canonical public URLs
     for (const url of [
         'https://airportguideapp.com/',
+        'https://airportguideapp.com/guides/',
         'https://airportguideapp.com/guides/dubai/',
+        'https://airportguideapp.com/guides/jfk/',
+        'https://airportguideapp.com/guides/bangkok/',
+        'https://airportguideapp.com/guides/tokyo/',
         'https://airportguideapp.com/about/',
         'https://airportguideapp.com/privacy/'
     ]) {
         assert.ok(sitemapXml.includes(`<loc>${url}</loc>`), url);
+    }
+});
+
+test('JFK, BKK, HND and NRT arrivals surface the matching arrival guide and tailored card copy', () => {
+    const { populateCard, getEl } = bootPopulateCard();
+    for (const [arrIata, expectedHref, expectedGuide, expectedTitle, expectedEsim, expectedTaxi] of [
+        ['JFK', '/guides/jfk/', 'jfk', 'Arriving at New York (JFK)?', 'US eSIM for New York Arrival', 'JFK Transfer to Manhattan'],
+        ['BKK', '/guides/bangkok/', 'bangkok', 'Arriving at Bangkok (BKK)?', 'Thailand eSIM for Bangkok Arrival', 'BKK Transfer to Your Hotel'],
+        ['HND', '/guides/tokyo/', 'tokyo', 'Arriving at Tokyo Haneda (HND)?', 'Japan eSIM for Tokyo Arrival', 'Haneda (HND) Hotel Transfer'],
+        ['NRT', '/guides/tokyo/', 'tokyo', 'Arriving at Tokyo Narita (NRT)?', 'Japan eSIM for Tokyo Arrival', 'Narita (NRT) Transfer to Tokyo']
+    ]) {
+        populateCard({
+            flight_number: 'BA99',
+            airline_iata: 'BA',
+            dep_iata: 'LHR',
+            arr_iata: arrIata,
+            departure_time: '2026-11-22 10:00',
+            arrival_time: '2026-11-22 16:00',
+            terminal: '5',
+            gate: 'B1',
+            arr_gate: '12',
+            baggage_belt: '3',
+            status: 'scheduled',
+            delay_mins: 0
+        });
+        assert.equal(getEl('arrivalGuide').classList.contains('hidden'), false);
+        assert.equal(getEl('arrivalGuide').href, expectedHref);
+        assert.equal(getEl('arrivalGuide').dataset.guide, expectedGuide);
+        assert.equal(getEl('arrivalGuideTitle').textContent, expectedTitle);
+        assert.equal(getEl('esimTitle').textContent, expectedEsim);
+        assert.equal(getEl('taxiTitle').textContent, expectedTaxi);
+    }
+
+    // Non-guide airport resets cleanly
+    populateCard({
+        flight_number: 'SK501',
+        airline_iata: 'SK',
+        dep_iata: 'CPH',
+        arr_iata: 'LHR',
+        departure_time: '2026-11-22 08:00',
+        arrival_time: '2026-11-22 09:10',
+        terminal: '3',
+        gate: 'C10',
+        arr_gate: 'A4',
+        baggage_belt: '2',
+        status: 'scheduled',
+        delay_mins: 0
+    });
+    assert.equal(getEl('arrivalGuide').classList.contains('hidden'), true);
+});
+
+test('guides hub and new destination guides keep valid canonicals, partner links and flight forms', () => {
+    for (const [html, canonical, formId, inputId, errorId, sampleInput, normalizedFlight, expectedDest, airaloPlacement, kiwitaxiPlacement] of [
+        [jfkHtml, 'https://airportguideapp.com/guides/jfk/', 'jfkFlightForm', 'jfkFlightInput', 'jfkFlightError', ' ba 0175 ', 'BA175', 'JFK', 'jfk_guide', 'jfk_guide'],
+        [bangkokHtml, 'https://airportguideapp.com/guides/bangkok/', 'bkkFlightForm', 'bkkFlightInput', 'bkkFlightError', ' tg 0911 ', 'TG911', 'BKK', 'bangkok_guide', 'bangkok_guide'],
+        [tokyoHtml, 'https://airportguideapp.com/guides/tokyo/', 'tokyoFlightForm', 'tokyoFlightInput', 'tokyoFlightError', ' ba 007 ', 'BA7', 'TYO', 'tokyo_guide', 'tokyo_guide']
+    ]) {
+        assert.ok(html.includes(`<link rel="canonical" href="${canonical}">`), canonical);
+        assert.match(html, new RegExp(`href="https://airalo\\.pxf\\.io/2RKYkg"[^>]*data-provider="airalo"[^>]*data-placement="${airaloPlacement}"`));
+        assert.match(html, new RegExp(`href="https://kiwitaxi\\.tpo\\.mx/dUq07Ia1"[^>]*data-provider="kiwitaxi"[^>]*data-placement="${kiwitaxiPlacement}"`));
+
+        const scriptStart = html.lastIndexOf('<script>');
+        const scriptEnd = html.lastIndexOf('</script>');
+        const inlineJs = html.slice(scriptStart + '<script>'.length, scriptEnd);
+        let submitHandler;
+        const input = { value: sampleInput, focus() {} };
+        const error = { hidden: true, textContent: '' };
+        const form = { addEventListener: (type, fn) => { if (type === 'submit') submitHandler = fn; } };
+        const location = { origin: 'https://airportguideapp.com', href: canonical };
+        const window = { AirportGuideAnalytics: { campaign: { utm_source: 'organic', utm_medium: 'test' } } };
+        const document = {
+            getElementById: id => id === formId ? form : id === inputId ? input : id === errorId ? error : null
+        };
+        runInNewContext(inlineJs, { window, document, location, URL });
+        submitHandler({ preventDefault() {} });
+        const redirected = new URL(location.href);
+        assert.equal(redirected.pathname, '/');
+        assert.equal(redirected.searchParams.get('flight'), normalizedFlight);
+        assert.equal(redirected.searchParams.get('dest'), expectedDest);
+        assert.equal(redirected.searchParams.get('utm_source'), 'organic');
+    }
+
+    assert.ok(guidesHubHtml.includes('<link rel="canonical" href="https://airportguideapp.com/guides/">'));
+    for (const path of ['/guides/dubai/', '/guides/jfk/', '/guides/bangkok/', '/guides/tokyo/']) {
+        assert.ok(guidesHubHtml.includes(`href="${path}"`), path);
     }
 });

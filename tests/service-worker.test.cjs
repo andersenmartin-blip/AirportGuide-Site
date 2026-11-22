@@ -17,7 +17,8 @@ function worker() {
     const self = { location: { origin }, addEventListener: (name, handler) => { handlers[name] = handler; } };
     const fetch = async request => {
         if (offline) throw new Error('Offline');
-        return new Response(new URL(request.url).pathname === '/guides/dubai/' ? 'Dubai guide' : 'Flight search');
+        const path = new URL(request.url).pathname;
+        return new Response(path.startsWith('/guides/') ? `Guide ${path}` : 'Flight search');
     };
     runInNewContext(source, { self, caches, fetch, URL, Response });
     return {
@@ -38,13 +39,17 @@ function worker() {
     };
 }
 
-test('the Dubai guide cannot overwrite the flight-search page in the offline cache', async () => {
+test('the Dubai and new airport guides cannot overwrite the flight-search page in the offline cache', async () => {
     const sw = worker();
     await sw.request('/?flight=SK943');
-    await sw.request('/guides/dubai/');
+    for (const guidePath of ['/guides/', '/guides/dubai/', '/guides/jfk/', '/guides/bangkok/', '/guides/tokyo/']) {
+        await sw.request(guidePath);
+    }
     sw.offline();
     assert.equal(await (await sw.request('/?flight=EK152')).text(), 'Flight search');
-    assert.equal(await (await sw.request('/guides/dubai/')).text(), 'Dubai guide');
+    for (const guidePath of ['/guides/', '/guides/dubai/', '/guides/jfk/', '/guides/bangkok/', '/guides/tokyo/']) {
+        assert.equal(await (await sw.request(guidePath)).text(), `Guide ${guidePath}`);
+    }
 });
 
 test('an unknown offline URL does not silently show the wrong guide', async () => {

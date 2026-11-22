@@ -82,8 +82,24 @@ details p { font-size: .95rem; color: #bdc9d9; }
 .sources li { margin: 8px 0; }
 .site-footer { border-top: 1px solid #ffffff12; padding-top: 24px; padding-bottom: 36px; font-size: .82rem; color: #94a3b8; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .footer-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.guide-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 22px; }
+.guide-card { display: flex; flex-direction: column; border: 1px solid #334155; border-radius: 18px; padding: 22px; background: linear-gradient(145deg, #1e293b88, #0f172ad9); text-decoration: none; color: inherit; transition: border-color .18s ease, transform .18s ease, background .18s ease; }
+.guide-card:hover { border-color: #818cf8; background: linear-gradient(145deg, #312e8155, #1e293bcc); transform: translateY(-2px); color: inherit; }
+.guide-iata { display: inline-block; align-self: flex-start; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #a5b4fc; background: #312e8177; padding: 4px 10px; border-radius: 999px; margin-bottom: 10px; }
+.guide-card h3 { margin: 2px 0 8px; font-size: 1.25rem; color: #fff; }
+.guide-card p { margin: 0 0 14px; font-size: .92rem; color: #bdc9d9; line-height: 1.55; }
+.guide-meta-list { margin: 0 0 18px; padding-left: 18px; font-size: .85rem; color: #94a3b8; flex: 1; }
+.guide-meta-list li { margin: 4px 0; }
+.guide-card-cta { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; font-weight: 700; color: #b5b4ff; }
+.related-guides { margin-top: 42px; padding-top: 28px; border-top: 1px solid #334155; }
+.related-guides h2 { font-size: 1.35rem; margin-bottom: 14px; }
+.related-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.related-card { display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #334155; border-radius: 14px; padding: 16px; background: #1e293b55; text-decoration: none; color: inherit; }
+.related-card:hover { border-color: #818cf8; background: #312e8144; color: inherit; }
+.related-card strong { color: #fff; font-size: .98rem; display: block; margin-bottom: 4px; }
+.related-card span { color: #94a3b8; font-size: .82rem; line-height: 1.45; }
 @media (max-width: 760px) {
-    .terminal-grid { grid-template-columns: 1fr; }
+    .terminal-grid, .guide-grid, .related-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {
     .site-header, .guide, .site-footer { padding-left: 20px; padding-right: 20px; }
