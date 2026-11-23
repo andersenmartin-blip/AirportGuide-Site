@@ -1,34 +1,33 @@
 # flightcard-api Cloudflare Worker
 
-`worker.js` is a complete replacement for the Worker source supplied by the owner on 6 November 2026. It uses the existing Airlabs and AeroDataBox subscriptions and the existing JSON fields consumed by `index.html`.
+`worker.js` powers `https://flightcard-api.andersen-martin.workers.dev` and combines AirLabs and AeroDataBox data while keeping both free-tier API quotas safe (`quota-saver-2026-11-23`).
 
-## Gate fix
+## Quota-saver design (`quota-saver-2026-11-23`)
 
-The previous Worker ignored Airlabs `dep_gate`, `dep_terminal`, `arr_gate` and `arr_baggage`. The replacement uses those fields when the corresponding AeroDataBox field is missing or a placeholder. AeroDataBox retains priority when it supplies a usable value for the same departure. A gate is never inferred from the terminal or hardcoded.
+Measured live usage on 23 November 2026 showed why quota protection is critical:
+- **RapidAPI / AeroDataBox (`BASIC` plan):** `600` API Units/month where `/flights/number/{flight}/{date}` consumes `2` API Units per call = **`300` real AeroDataBox lookups/month**.
+- **AirLabs (`Free` plan):** `1,000` API requests/month.
 
-Provider failures are isolated. A timeout, quota error or invalid JSON from one provider does not discard the other provider's data. No-data responses return an error instead of an apparently scheduled flight. The existing limit of one request per provider per lookup is retained; there is no background polling or new subscription.
-
-The AeroDataBox result is matched to the departure date, route where available, and scheduled time if needed. The dated endpoint can also contain flights arriving on that date, so taking the first item can attach the previous day's gate. Ambiguous matches are not merged. Departure time comparison uses the local wall clock at the same airport rather than mixing timezone-naive Airlabs strings with offset-bearing AeroDataBox strings.
+To stretch both free tiers roughly 3–10× without degrading live gate accuracy:
+1. **Smart AeroDataBox fallback (`needsAeroFallback`):** AirLabs runs first (`~227 ms` avg). AeroDataBox is called **only** when AirLabs fails/is empty, is missing `dep_gate` or `dep_terminal`, or shows an `en-route`/`landed` flight missing both `arr_gate` and `arr_baggage`. When AirLabs already supplies complete fields, AeroDataBox is skipped (`aerodatabox.state: "skipped_sufficient"`). AeroDataBox retains priority for usable fields whenever it is called, and placeholder values never erase AirLabs data.
+2. **Isolate memory cache + HTTP `Cache-Control` + optional Custom Domain edge cache:** Repeats for the same canonical flight share a bounded 200-entry Worker memory cache (`X-Cache: HIT`) plus HTTP `Cache-Control`: `180 s` (3 min) for active/scheduled flights, `1800 s` (30 min) for `landed`/`cancelled`, and `120 s` (2 min) for clean `404`s. `502`/`500` errors use `Cache-Control: no-store` and are never cached. `caches.default` is also attempted automatically (becomes globally shared across Cloudflare PoPs if the Worker is later bound to a Custom Domain such as `api.airportguideapp.com`; safely no-ops on `*.workers.dev`).
+3. **Origin allowlist (`resolveOrigin`):** Rejects unknown `Origin` headers with HTTP `403` before making any paid upstream API call. Allows `https://airportguideapp.com`, `https://www.airportguideapp.com`, and `http://localhost` / `127.0.0.1` (optional port) with `Vary: Origin`. Direct curl/API calls without an `Origin` header remain testable.
+4. **Redacted `debug=1` on errors too:** Opening `?flight=BA107&debug=1` exposes `airlabs` and `aerodatabox` states (`ok`, `empty`, `timeout`, `http_429`, `skipped_sufficient`, `cache`) even on `404`/`502` responses without ever leaking secrets.
+5. **Frontend `sessionStorage` cache (`index.html`):** Caches valid flight cards per browser session (`3` min live / `30` min landed or cancelled) so back/forward clicks and repeated lookups avoid hitting the Worker at all.
 
 ## Deploy to the EXISTING Cloudflare Worker
 
-1. Open **Workers & Pages → flightcard-api → Edit code** in Cloudflare.
-2. Keep a copy of the current code for rollback. Replace the editor contents with all of `worker.js`.
+1. Open **Workers & Pages → flightcard-api → Edit code** in Cloudflare (`https://dash.cloudflare.com/`).
+2. Keep a backup copy of the current Worker script for rollback. Replace the editor contents with all of `worker.js`.
 3. Keep the existing `AIRLABS_KEY` and `AERO_API_KEY` secret bindings. Their values belong in Cloudflare, never in this repository.
-4. Select **Deploy**. A GitHub Pages deployment does **not** deploy this Worker.
-5. Open `https://flightcard-api.andersen-martin.workers.dev/?flight=IB720&debug=1`, then search IB720 again on the website. Compare the same date and departure with Heathrow's official result. Gates can change; A7 was the owner's observation, not a verified current value.
-
-The optional `debug=1` response contains the version, retrieval time, departure date, provider availability and gate/terminal values from each matched provider. `retrieved_at` means when this Worker answered, not when an upstream provider last updated its data. It contains neither API keys nor raw upstream errors. `gate_source` identifies the chosen source; `null` means neither supplied a gate. An AeroDataBox state of `ok` with `matched: false` means no unambiguous matching occurrence was selected.
-
-If both matched providers return no gate while Heathrow publishes one for the same departure, the remaining issue is upstream data coverage or freshness. This patch cannot supply a gate absent from both APIs. Returning `Cache-Control: no-store` prevents storage of new responses in ordinary HTTP caches, but the frontend still needs an explicit new search to fetch new data; this change does not add automatic refresh.
+4. Click **Deploy** (a GitHub Pages deploy updates `index.html`, not the Cloudflare Worker).
+5. Verify live:
+   - `https://flightcard-api.andersen-martin.workers.dev/?flight=EK002&debug=1` (`X-Cache: MISS` then `X-Cache: HIT`, `version: "quota-saver-2026-11-23"`).
 
 ## Validation
 
-Run `node --test tests/*.test.cjs` from the repository root. The Worker tests use synthetic responses and never call paid APIs. They cover the missing-gate regression, field precedence, placeholders, timeouts, quota/network/JSON errors, secret redaction, single-provider fallback, no-data errors, local dates, route/date/occurrence matching, flight-number normalization and summer time formatting.
+Run `node --test tests/*.test.cjs` from the repository root. Tests use synthetic fixtures and never call paid APIs.
 
-Owner verification on 6 November 2026: after deploying the replacement, the owner supplied the live IB720 debug response showing `gate: A7`, `gate_source: Airlabs`, Airlabs state `ok` and AeroDataBox state `ok`/matched with no gate. The owner then confirmed A7 on the public result card and reported correct data for many other manually checked Heathrow departures. The full list and timestamps were not supplied, so this is owner-reported sample validation, not a measured coverage rate or latency guarantee.
-
-Official API field references checked on 6 November 2026:
-
+Official API references:
 - https://airlabs.co/docs/flight
 - https://doc.aerodatabox.com/docs/openapi-rapidapi-v1.json

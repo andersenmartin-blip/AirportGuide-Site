@@ -1056,6 +1056,83 @@
             searchButton.disabled = true;
             searchButton.innerHTML = '<i class="fas fa-spinner fa-spin text-lg"></i>';
 
+            const CACHE_KEY = 'airportguide_flight_cache_v1';
+            const MAX_CLIENT_CACHE = 20;
+            function readFlightCache(key) {
+                try {
+                    if (typeof sessionStorage === 'undefined') return null;
+                    const raw = sessionStorage.getItem(CACHE_KEY);
+                    if (!raw) return null;
+                    const map = JSON.parse(raw);
+                    const entry = map && map[key];
+                    if (!entry || !entry.data || !entry.expiresAt || entry.expiresAt <= Date.now()) {
+                        if (map && key in map) {
+                            delete map[key];
+                            sessionStorage.setItem(CACHE_KEY, JSON.stringify(map));
+                        }
+                        return null;
+                    }
+                    return entry.data;
+                } catch (_) {
+                    return null;
+                }
+            }
+            function writeFlightCache(key, data) {
+                try {
+                    if (typeof sessionStorage === 'undefined' || !key || !data) return;
+                    const raw = sessionStorage.getItem(CACHE_KEY);
+                    const map = (raw && JSON.parse(raw)) || {};
+                    const now = Date.now();
+                    for (const k of Object.keys(map)) {
+                        if (!map[k] || !map[k].expiresAt || map[k].expiresAt <= now) delete map[k];
+                    }
+                    if (key in map) delete map[key];
+                    const keys = Object.keys(map);
+                    while (keys.length >= MAX_CLIENT_CACHE) {
+                        delete map[keys.shift()];
+                    }
+                    const status = String(data.status || '').toLowerCase();
+                    const ttlMs = (status === 'landed' || status === 'cancelled') ? 1800000 : 180000;
+                    map[key] = { data, expiresAt: now + ttlMs };
+                    sessionStorage.setItem(CACHE_KEY, JSON.stringify(map));
+                } catch (_) {
+                    // Ignore storage quota or private browsing errors.
+                }
+            }
+            async function renderFlightResult(data) {
+                await Promise.race([
+                    airportDbReady,
+                    new Promise(resolve => setTimeout(resolve, 1500))
+                ]);
+                populateCard(data);
+                loadingView.classList.add('hidden');
+                loadingView.classList.remove('flex');
+                resultView.classList.remove('hidden');
+                if (typeof window !== 'undefined' && window.AirportGuidePartners?.refresh) {
+                    window.AirportGuidePartners.refresh({ airport: data.arr_iata || '', placement: 'flight_result' });
+                }
+                if (typeof gtag === 'function') gtag('event', 'flight_search_success', { arrival_airport: data.arr_iata || '' });
+                updateRecentSearches(flightNumber);
+                const url = new URL(location.href);
+                url.searchParams.set('flight', flightNumber);
+                history.replaceState({}, '', url);
+                const reduceMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+                if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+                    window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+                }
+            }
+
+            const cached = readFlightCache(flightNumber);
+            if (cached) {
+                try {
+                    await renderFlightResult(cached);
+                } finally {
+                    searchButton.disabled = false;
+                    searchButton.innerHTML = defaultSearchIcon;
+                }
+                return;
+            }
+
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 12000);
 
@@ -1071,22 +1148,8 @@
                     throw new Error("Flight not found.");
                 }
 
-                await Promise.race([
-                    airportDbReady,
-                    new Promise(resolve => setTimeout(resolve, 1500))
-                ]);
-                populateCard(data);
-                loadingView.classList.add('hidden');
-                loadingView.classList.remove('flex');
-                resultView.classList.remove('hidden');
-                window.AirportGuidePartners?.refresh({ airport: data.arr_iata || '', placement: 'flight_result' });
-                if (typeof gtag === 'function') gtag('event', 'flight_search_success', { arrival_airport: data.arr_iata || '' });
-                updateRecentSearches(flightNumber);
-                const url = new URL(location.href);
-                url.searchParams.set('flight', flightNumber);
-                history.replaceState({}, '', url);
-                const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+                writeFlightCache(flightNumber, data);
+                await renderFlightResult(data);
 
             } catch (err) {
                 if (typeof gtag === 'function') gtag('event', 'flight_search_failed', { reason: err.name === 'AbortError' ? 'timeout' : 'unavailable', method });

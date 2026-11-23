@@ -55,3 +55,46 @@ test('the common search entry point sends the canonical number to the API', asyn
     assert.equal(new URL(calls[0]).searchParams.get('flight'), 'EK32');
     assert.equal(flightInput.value, 'EK32');
 });
+
+test('repeated flight lookups reuse the short-lived sessionStorage cache without another API request', async () => {
+    const searchStart = html.indexOf('        async function searchFlight(');
+    const searchEnd = html.indexOf('        function populateCard(', searchStart);
+    const store = new Map();
+    const calls = [];
+    const rendered = [];
+    const element = () => ({ classList: { add() {}, remove() {} }, setAttribute() {}, value: '', innerHTML: '' });
+    const sessionStorage = {
+        getItem: k => store.has(k) ? store.get(k) : null,
+        setItem: (k, v) => store.set(k, String(v))
+    };
+    const searchFlight = runInNewContext(normalization + html.slice(searchStart, searchEnd) + '\nsearchFlight;', {
+        URL, Date, JSON, sessionStorage,
+        flightInput: element(),
+        searchView: element(), errorMsg: element(), loadingView: element(), resultView: element(), searchButton: element(),
+        defaultSearchIcon: '', WORKER_URL: 'https://flight-service.invalid',
+        AbortController, setTimeout, clearTimeout,
+        airportDbReady: Promise.resolve(),
+        populateCard: data => rendered.push(data),
+        updateRecentSearches() {},
+        location: { href: 'https://airportguideapp.com/' },
+        history: { replaceState() {} },
+        window: { matchMedia: () => ({ matches: true }), scrollTo() {} },
+        fetch: async url => {
+            calls.push(url);
+            return {
+                ok: true,
+                status: 200,
+                json: async () => ({ flight_number: 'EK32', dep_iata: 'LHR', arr_iata: 'DXB', status: 'en-route' })
+            };
+        },
+        showError() { throw new Error('unexpected error'); }
+    });
+
+    await searchFlight('EK032');
+    await searchFlight('ek 32');
+    assert.equal(calls.length, 1);
+    assert.equal(rendered.length, 2);
+    assert.equal(rendered[1].arr_iata, 'DXB');
+    const cachedMap = JSON.parse(store.get('airportguide_flight_cache_v1'));
+    assert.ok(cachedMap.EK32.expiresAt > Date.now() + 120000);
+});

@@ -1,15 +1,35 @@
 // Paste this complete file into Cloudflare's flightcard-api Worker editor.
 // Keep AIRLABS_KEY and AERO_API_KEY in the existing Worker secrets.
-const VERSION = 'gate-fallback-2026-11-06';
-const HEADERS = {
-  'Content-Type': 'application/json; charset=utf-8',
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Cache-Control': 'no-store'
-};
+const VERSION = 'quota-saver-2026-11-23';
+const DEFAULT_ALLOW_ORIGIN = 'https://airportguideapp.com';
+const ALLOWED_ORIGIN_RE = /^(?:https:\/\/(?:www\.)?airportguideapp\.com|http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?)$/i;
+const MEMORY_CACHE = new Map();
+const MAX_CACHE_ENTRIES = 200;
 
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: HEADERS });
+function resolveOrigin(request) {
+  const origin = request.headers.get('Origin');
+  if (!origin) return { allowed: true, headerOrigin: DEFAULT_ALLOW_ORIGIN };
+  if (ALLOWED_ORIGIN_RE.test(origin)) return { allowed: true, headerOrigin: origin };
+  return { allowed: false, headerOrigin: DEFAULT_ALLOW_ORIGIN };
+}
+
+function buildHeaders(allowOrigin = DEFAULT_ALLOW_ORIGIN, cacheControl = 'no-store', extraHeaders = {}) {
+  return {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Accept',
+    'Vary': 'Origin',
+    'Cache-Control': cacheControl,
+    ...extraHeaders
+  };
+}
+
+function json(data, status = 200, { allowOrigin = DEFAULT_ALLOW_ORIGIN, cacheControl = 'no-store', extraHeaders = {} } = {}) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: buildHeaders(allowOrigin, cacheControl, extraHeaders)
+  });
 }
 
 function value(...values) {
@@ -87,20 +107,126 @@ function flightStatus(airlabsStatus, aeroStatus) {
   return status;
 }
 
+// Protect AeroDataBox's tight 600-unit monthly RapidAPI cap (300 lookups max):
+// skip the secondary API call whenever AirLabs already supplies gate,
+// terminal, and (for en-route/landed arrivals) arrival gate or baggage info.
+function needsAeroFallback(airlabsFlight) {
+  if (!airlabsFlight) return true;
+  if (value(airlabsFlight.dep_gate) === 'N/A' || value(airlabsFlight.dep_terminal) === 'N/A') return true;
+  const status = flightStatus(airlabsFlight.status, null);
+  if (['en-route', 'landed'].includes(status)) {
+    return value(airlabsFlight.arr_gate) === 'N/A' && value(airlabsFlight.arr_baggage) === 'N/A';
+  }
+  return false;
+}
+
+function cacheTtlSeconds(status, body) {
+  if (status === 200) return ['landed', 'cancelled'].includes(body?.status) ? 1800 : 180;
+  if (status === 404) return 120;
+  return 0;
+}
+
+function setMemoryCache(key, entry) {
+  if (MEMORY_CACHE.has(key)) MEMORY_CACHE.delete(key);
+  while (MEMORY_CACHE.size >= MAX_CACHE_ENTRIES) {
+    const oldest = MEMORY_CACHE.keys().next().value;
+    MEMORY_CACHE.delete(oldest);
+  }
+  MEMORY_CACHE.set(key, entry);
+}
+
+function edgeCacheRequest(requestUrl, flightNumber) {
+  const keyUrl = new URL('/', requestUrl.origin);
+  keyUrl.searchParams.set('flight', flightNumber);
+  return new Request(keyUrl.href, { method: 'GET' });
+}
+
+async function readCachedLookup(requestUrl, flightNumber) {
+  const now = Date.now();
+  const mem = MEMORY_CACHE.get(flightNumber);
+  if (mem) {
+    if (mem.expiresAt > now) return { entry: mem, cacheState: 'hit_memory' };
+    MEMORY_CACHE.delete(flightNumber);
+  }
+  try {
+    const edgeCache = globalThis.caches?.default;
+    if (!edgeCache) return null;
+    const hit = await edgeCache.match(edgeCacheRequest(requestUrl, flightNumber));
+    if (!hit) return null;
+    const parsed = await hit.json();
+    if (!parsed || typeof parsed.status !== 'number' || !parsed.body) return null;
+    if (parsed.expiresAt && parsed.expiresAt <= now) return null;
+    const entry = {
+      ...parsed,
+      expiresAt: parsed.expiresAt || now + (parsed.ttlSeconds || 180) * 1000
+    };
+    setMemoryCache(flightNumber, entry);
+    return { entry, cacheState: 'hit_edge' };
+  } catch {
+    return null;
+  }
+}
+
+function storeCachedLookup(requestUrl, flightNumber, entry, ctx) {
+  setMemoryCache(flightNumber, entry);
+  try {
+    const edgeCache = globalThis.caches?.default;
+    if (!edgeCache || entry.ttlSeconds <= 0) return;
+    const record = new Response(JSON.stringify(entry), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': `public, max-age=${entry.ttlSeconds}`
+      }
+    });
+    const writePromise = edgeCache.put(edgeCacheRequest(requestUrl, flightNumber), record);
+    if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(writePromise);
+  } catch {
+    // Ignore cache API failures; in-memory isolate cache still serves hits.
+  }
+}
+
 export default {
-  async fetch(request, env) {
-    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: HEADERS });
-    if (request.method !== 'GET') return json({ error: 'Brug GET til flyopslag.' }, 405);
+  async fetch(request, env, ctx) {
+    const originCheck = resolveOrigin(request);
+    if (!originCheck.allowed) {
+      return json({ error: 'Origin not allowed.' }, 403, { allowOrigin: originCheck.headerOrigin });
+    }
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: buildHeaders(originCheck.headerOrigin, 'no-store') });
+    }
+    if (request.method !== 'GET') {
+      return json({ error: 'Brug GET til flyopslag.' }, 405, { allowOrigin: originCheck.headerOrigin });
+    }
+
     const url = new URL(request.url);
     const flight = normalizeFlight(url.searchParams.get('flight'));
-    if (!flight) return json({ error: 'Angiv et gyldigt flynummer, f.eks. IB720 eller EK032.' }, 400);
+    if (!flight) {
+      return json({ error: 'Angiv et gyldigt flynummer, f.eks. IB720 eller EK032.' }, 400, {
+        allowOrigin: originCheck.headerOrigin
+      });
+    }
+    const isDebug = url.searchParams.get('debug') === '1';
 
     try {
+      const cached = await readCachedLookup(url, flight.number);
+      if (cached) {
+        const { entry, cacheState } = cached;
+        const payload = isDebug
+          ? { ...entry.body, debug: { ...entry.debugMeta, cache: cacheState } }
+          : entry.body;
+        return json(payload, entry.status, {
+          allowOrigin: originCheck.headerOrigin,
+          cacheControl: `public, max-age=${entry.ttlSeconds}`,
+          extraHeaders: { 'X-Cache': 'HIT' }
+        });
+      }
+
       // Preserve the departure airport's LOCAL calendar date for the second API.
       const airlabsUrl = new URL('https://airlabs.co/api/v9/flight');
       airlabsUrl.searchParams.set(flight.icao ? 'flight_icao' : 'flight_iata', flight.number);
-      airlabsUrl.searchParams.set('api_key', env.AIRLABS_KEY || '');
-      const airlabs = await readProvider(airlabsUrl, {}, env.AIRLABS_KEY);
+      airlabsUrl.searchParams.set('api_key', env?.AIRLABS_KEY || '');
+      const airlabs = await readProvider(airlabsUrl, {}, env?.AIRLABS_KEY);
       const response = airlabs.data?.response;
       const candidate = (Array.isArray(response) ? response[0] : response) || null;
       const airlabsFlight = candidate && typeof candidate === 'object' &&
@@ -109,18 +235,49 @@ export default {
       const scheduled = value(airlabsFlight?.dep_time, airlabsFlight?.scheduled_dep_time);
       const localDate = scheduled.match(/^\d{4}-\d{2}-\d{2}/)?.[0] || new Date().toISOString().slice(0, 10);
 
-      const aero = await readProvider(
-        `https://aerodatabox.p.rapidapi.com/flights/number/${encodeURIComponent(flight.number)}/${localDate}`,
-        { headers: { 'x-rapidapi-key': env.AERO_API_KEY || '', 'x-rapidapi-host': 'aerodatabox.p.rapidapi.com' } },
-        env.AERO_API_KEY
-      );
+      let aero = { state: 'skipped_sufficient', data: null };
+      if (needsAeroFallback(airlabsFlight)) {
+        aero = await readProvider(
+          `https://aerodatabox.p.rapidapi.com/flights/number/${encodeURIComponent(flight.number)}/${localDate}`,
+          { headers: { 'x-rapidapi-key': env?.AERO_API_KEY || '', 'x-rapidapi-host': 'aerodatabox.p.rapidapi.com' } },
+          env?.AERO_API_KEY
+        );
+      }
       const aeroFlight = selectAeroFlight(aero.data, airlabsFlight, localDate);
       const departure = aeroFlight?.departure;
       const arrival = aeroFlight?.arrival;
 
+      const buildDebugMeta = ttlSeconds => ({
+        version: VERSION,
+        retrieved_at: new Date().toISOString(),
+        departure_date: localDate,
+        cache: 'miss',
+        ttl_seconds: ttlSeconds,
+        airlabs: { state: airlabs.state, gate: value(airlabsFlight?.dep_gate), terminal: value(airlabsFlight?.dep_terminal) },
+        aerodatabox: { state: aero.state, matched: Boolean(aeroFlight), gate: value(departure?.gate), terminal: value(departure?.terminal) }
+      });
+
       if (!airlabsFlight && !aeroFlight) {
-        const failed = [airlabs.state, aero.state].some(state => state !== 'ok' && state !== 'empty');
-        return json({ error: failed ? 'Flytjenesterne kunne ikke levere data. Prøv igen.' : 'Flyvningen blev ikke fundet.' }, failed ? 502 : 404);
+        const aeroUpOrSkipped = aero.state === 'ok' || aero.state === 'empty' || aero.state === 'skipped_sufficient';
+        const failed = (airlabs.state !== 'ok' && airlabs.state !== 'empty') || !aeroUpOrSkipped;
+        const status = failed ? 502 : 404;
+        const body = { error: failed ? 'Flytjenesterne kunne ikke levere data. Prøv igen.' : 'Flyvningen blev ikke fundet.' };
+        const ttlSeconds = cacheTtlSeconds(status, body);
+        const debugMeta = buildDebugMeta(ttlSeconds);
+        if (ttlSeconds > 0) {
+          storeCachedLookup(url, flight.number, {
+            status,
+            body,
+            debugMeta,
+            ttlSeconds,
+            expiresAt: Date.now() + ttlSeconds * 1000
+          }, ctx);
+        }
+        return json(isDebug ? { ...body, debug: debugMeta } : body, status, {
+          allowOrigin: originCheck.headerOrigin,
+          cacheControl: ttlSeconds > 0 ? `public, max-age=${ttlSeconds}` : 'no-store',
+          extraHeaders: { 'X-Cache': 'MISS' }
+        });
       }
 
       // AeroDataBox retains priority for gate/terminal, but an empty field must
@@ -158,20 +315,27 @@ export default {
         gate_source: gateSource
       };
 
+      const ttlSeconds = cacheTtlSeconds(200, card);
+      const debugMeta = buildDebugMeta(ttlSeconds);
+      storeCachedLookup(url, flight.number, {
+        status: 200,
+        body: card,
+        debugMeta,
+        ttlSeconds,
+        expiresAt: Date.now() + ttlSeconds * 1000
+      }, ctx);
+
       // Optional, redacted troubleshooting: ?flight=IB720&debug=1.
       // These are values returned by the APIs, not a Heathrow website scrape.
-      if (url.searchParams.get('debug') === '1') {
-        card.debug = {
-          version: VERSION,
-          retrieved_at: new Date().toISOString(),
-          departure_date: localDate,
-          airlabs: { state: airlabs.state, gate: value(airlabsFlight?.dep_gate), terminal: value(airlabsFlight?.dep_terminal) },
-          aerodatabox: { state: aero.state, matched: Boolean(aeroFlight), gate: value(departure?.gate), terminal: value(departure?.terminal) }
-        };
-      }
-      return json(card);
+      return json(isDebug ? { ...card, debug: debugMeta } : card, 200, {
+        allowOrigin: originCheck.headerOrigin,
+        cacheControl: `public, max-age=${ttlSeconds}`,
+        extraHeaders: { 'X-Cache': 'MISS' }
+      });
     } catch {
-      return json({ error: 'Kunne ikke behandle flyoplysningerne. Prøv igen.' }, 500);
+      return json({ error: 'Kunne ikke behandle flyoplysningerne. Prøv igen.' }, 500, {
+        allowOrigin: originCheck.headerOrigin
+      });
     }
   }
 };
